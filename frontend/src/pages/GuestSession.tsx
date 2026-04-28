@@ -252,10 +252,10 @@ export default function GuestSession() {
   const lastAssistant = messages.filter((m) => m.role === "assistant" && m.content).slice(-1)[0];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-[100dvh] w-full overflow-hidden flex flex-col">
       <AppHeader />
 
-      <div className="border-b border-[hsl(var(--hairline))] bg-[hsl(var(--muted))]">
+      <div className="shrink-0 border-b border-[hsl(var(--hairline))] bg-[hsl(var(--muted))]">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 text-[12px]">
           <span className="font-medium text-[hsl(var(--ink-muted))]">
             ✦ {T.guestNotice}
@@ -266,7 +266,7 @@ export default function GuestSession() {
         </div>
       </div>
 
-      <div className="border-b border-[hsl(var(--hairline))] bg-[hsl(var(--paper))]">
+      <div className="shrink-0 border-b border-[hsl(var(--hairline))] bg-[hsl(var(--paper))]">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex items-center gap-3 flex-wrap">
           <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))]">{T.pickSubject}:</p>
           {subjects.map((s) => (
@@ -285,8 +285,8 @@ export default function GuestSession() {
         </div>
       </div>
 
-      <main className="flex-1 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
-        <section className="lg:col-span-8 flex flex-col min-h-0 min-h-[60vh]">
+      <main className="flex-1 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
+        <section className="lg:col-span-8 flex flex-col min-h-0 h-full">
           <div ref={scrollRef} className="flex-1 overflow-y-auto pr-2 space-y-6">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full min-h-[40vh] text-center px-8">
@@ -352,7 +352,7 @@ export default function GuestSession() {
           </div>
         </section>
 
-        <aside className="lg:col-span-4 border-t border-[hsl(var(--hairline))] lg:border-t-0 lg:border-l lg:border-[hsl(var(--hairline))] pt-6 lg:pt-0 lg:pl-6 space-y-8">
+        <aside className="lg:col-span-4 border-t border-[hsl(var(--hairline))] lg:border-t-0 lg:border-l lg:border-[hsl(var(--hairline))] pt-6 lg:pt-0 lg:pl-6 space-y-8 overflow-y-auto h-full pr-2">
           <div>
             <p className="text-[11px] font-medium text-[hsl(var(--ink-muted))] tracking-wide mb-3 uppercase">Pipeline · Last Turn</p>
             {lastAssistant ? (

@@ -33,7 +33,7 @@ export function AppHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[hsl(var(--hairline))] bg-[hsl(var(--background))]/80 backdrop-blur-xl">
+    <header className="shrink-0 sticky top-0 z-50 border-b border-[hsl(var(--hairline))] bg-[hsl(var(--background))]/80 backdrop-blur-xl">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-auto sm:h-16 py-3 sm:py-0 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
         <div className="flex items-center justify-between w-full sm:w-auto">
           <Link to="/" className="flex items-center gap-2">

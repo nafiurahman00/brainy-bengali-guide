@@ -78,9 +78,9 @@ export default function SessionPage() {
   const lastAssistantId = [...messages].reverse().find((m) => m.role === "assistant" && !m.pending)?.id;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-[100dvh] w-full overflow-hidden flex flex-col">
       <AppHeader />
-      <div className="border-b border-[hsl(var(--hairline))] bg-[hsl(var(--paper))]">
+      <div className="shrink-0 border-b border-[hsl(var(--hairline))] bg-[hsl(var(--paper))]">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <button onClick={() => nav("/")} className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))] transition-colors">
@@ -96,8 +96,8 @@ export default function SessionPage() {
         </div>
       </div>
 
-      <main className="flex-1 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
-        <section className="lg:col-span-8 flex flex-col min-h-0 min-h-[60vh]">
+      <main className="flex-1 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
+        <section className="lg:col-span-8 flex flex-col min-h-0 h-full">
           <div ref={scrollRef} className="flex-1 overflow-y-auto pr-2 space-y-6">
             {loading && <div className="text-[12px] font-medium text-[hsl(var(--ink-muted))]">loading…</div>}
             {!loading && messages.length === 0 && (
@@ -164,7 +164,7 @@ export default function SessionPage() {
           </div>
         </section>
 
-        <aside className="lg:col-span-4 border-t border-[hsl(var(--hairline))] lg:border-t-0 lg:border-l lg:border-[hsl(var(--hairline))] pt-6 lg:pt-0 lg:pl-6">
+        <aside className="lg:col-span-4 border-t border-[hsl(var(--hairline))] lg:border-t-0 lg:border-l lg:border-[hsl(var(--hairline))] pt-6 lg:pt-0 lg:pl-6 overflow-y-auto h-full pr-2">
           <p className="text-[11px] font-medium text-[hsl(var(--ink-muted))] tracking-wide mb-4 uppercase">Pipeline · Last Turn</p>
           <PipelinePanel
             last={messages.filter((m) => m.role === "assistant" && !m.pending).slice(-1)[0]}
