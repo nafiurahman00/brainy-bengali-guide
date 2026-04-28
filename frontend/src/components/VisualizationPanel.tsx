@@ -62,7 +62,7 @@ function buildSrcDoc(p5Code: string): string {
   }
   /* p5 inserts its own DOM elements (sliders, buttons) below the canvas — keep them on one row */
   .p5Canvas + * { margin-top: 6px; }
-  input[type="range"] { accent-color: #16A085; }
+  input[type="range"] { accent-color: #7c3aed; }
   .p5-error {
     color: #b91c1c;
     font: 12px ui-monospace, Menlo, monospace;
@@ -98,11 +98,11 @@ export function VisualizationPanel(props: { state: VizState; onRetry?: () => voi
 function PanelHeader({ subtitle }: { subtitle?: string }) {
   return (
     <div className="flex items-center gap-2 mb-3">
-      <div className="w-6 h-6 rounded-md bg-[hsl(var(--ink))] flex items-center justify-center shrink-0">
-        <Wand2 className="h-3.5 w-3.5 text-[hsl(var(--background))]" />
+      <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--gradient-primary)' }}>
+        <Wand2 className="h-3.5 w-3.5 text-white" />
       </div>
       <div className="min-w-0">
-        <p className="text-[11px] font-medium text-[hsl(var(--ink-muted))] tracking-wide uppercase leading-none">
+        <p className="text-[11px] font-medium text-[hsl(var(--primary))] tracking-wide uppercase leading-none">
           Visual Explainer
         </p>
         {subtitle && (
@@ -131,9 +131,9 @@ function VisualizationPanelInner({
     return (
       <div className="flex flex-col h-full">
         <PanelHeader />
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-10 rounded-xl border border-dashed border-[hsl(var(--hairline))] bg-[hsl(var(--muted))]/30">
-          <div className="w-10 h-10 rounded-xl bg-[hsl(var(--paper))] border border-[hsl(var(--hairline))] flex items-center justify-center mb-3">
-            <Sparkles className="h-4 w-4 text-[hsl(var(--ink-muted))]" />
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-10 rounded-xl border border-dashed border-[hsl(var(--primary)/0.2)] bg-[hsl(var(--primary)/0.03)]">
+          <div className="w-10 h-10 rounded-xl border border-[hsl(var(--primary)/0.2)] flex items-center justify-center mb-3 bg-[hsl(var(--primary)/0.06)]">
+            <Sparkles className="h-4 w-4 text-[hsl(var(--primary))]" />
           </div>
           <p className="text-[12px] text-[hsl(var(--ink-muted))] max-w-[240px] leading-relaxed">
             Ask your first question and a live, interactive sketch will appear here.
@@ -147,8 +147,8 @@ function VisualizationPanelInner({
     return (
       <div className="flex flex-col h-full">
         <PanelHeader subtitle="generating…" />
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-10 rounded-xl border border-[hsl(var(--hairline))] bg-[hsl(var(--paper))] shadow-surface">
-          <Loader2 className="h-5 w-5 animate-spin text-[hsl(var(--ink-muted))] mb-3" />
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-10 rounded-xl border border-[hsl(var(--primary)/0.15)] bg-[hsl(var(--primary)/0.03)] shadow-surface">
+          <Loader2 className="h-5 w-5 animate-spin text-[hsl(var(--primary))] mb-3" />
           <p className="text-[13px] font-medium text-[hsl(var(--ink))]">Building a visual…</p>
           <p className="text-[11px] text-[hsl(var(--ink-faint))] mt-1">Runs once per session · ~5–15s</p>
         </div>
@@ -166,7 +166,7 @@ function VisualizationPanelInner({
           {onRetry && (
             <button
               onClick={onRetry}
-              className="inline-flex items-center gap-1.5 text-[12px] font-medium border border-[hsl(var(--hairline))] rounded-lg h-8 px-3 bg-[hsl(var(--paper))] hover:border-[hsl(var(--ink))] hover:text-[hsl(var(--ink))] transition-colors"
+              className="inline-flex items-center gap-1.5 text-[12px] font-medium border border-[hsl(var(--primary)/0.2)] rounded-xl h-8 px-3 bg-[hsl(var(--paper))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
             >
               <RefreshCw className="h-3 w-3" /> Retry
             </button>
@@ -191,7 +191,7 @@ function VisualizationPanelInner({
         )}
       </div>
 
-      <div className="rounded-xl border border-[hsl(var(--hairline))] overflow-hidden bg-white shadow-surface aspect-[4/3] w-full">
+      <div className="rounded-xl border border-[hsl(var(--primary)/0.15)] overflow-hidden bg-white shadow-surface aspect-[4/3] w-full">
         <iframe
           key={typeof viz.p5_code === "string" ? viz.p5_code.slice(0, 64) : "viz"}
           title={viz.title || "Visualization"}
@@ -203,8 +203,8 @@ function VisualizationPanelInner({
       </div>
 
       {viz.interaction_hint && (
-        <div className="flex items-start gap-2 rounded-lg bg-[hsl(var(--muted))]/60 border border-[hsl(var(--hairline))] px-3 py-2">
-          <Sparkles className="h-3 w-3 text-[hsl(var(--ink-muted))] mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2 rounded-xl bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.12)] px-3 py-2">
+          <Sparkles className="h-3 w-3 text-[hsl(var(--primary))] mt-0.5 shrink-0" />
           <p className="text-[11.5px] text-[hsl(var(--ink-muted))] leading-relaxed">
             {viz.interaction_hint}
           </p>
@@ -214,14 +214,14 @@ function VisualizationPanelInner({
       <div className="border-t border-[hsl(var(--hairline))] pt-3">
         <button
           onClick={() => setShowCode((s) => !s)}
-          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))] transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] transition-colors"
         >
           {showCode ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           <Code2 className="h-3 w-3" /> {showCode ? "Hide source" : "View source"}
         </button>
 
         {showCode && (
-          <pre className="mt-2 text-[10.5px] leading-snug bg-[hsl(var(--muted))] border border-[hsl(var(--hairline))] rounded-lg p-3 overflow-auto max-h-72 whitespace-pre">
+          <pre className="mt-2 text-[10.5px] leading-snug bg-[hsl(var(--muted))] border border-[hsl(var(--hairline))] rounded-xl p-3 overflow-auto max-h-72 whitespace-pre">
             <code>{viz.p5_code}</code>
           </pre>
         )}

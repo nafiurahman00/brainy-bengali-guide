@@ -255,12 +255,12 @@ export default function GuestSession() {
     <div className="h-[100dvh] w-full overflow-hidden flex flex-col">
       <AppHeader />
 
-      <div className="shrink-0 border-b border-[hsl(var(--hairline))] bg-[hsl(var(--muted))]">
+      <div className="shrink-0 border-b border-[hsl(var(--hairline))]" style={{ background: 'linear-gradient(135deg, hsl(252 85% 60% / 0.06), hsl(320 70% 58% / 0.06))' }}>
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 text-[12px]">
           <span className="font-medium text-[hsl(var(--ink-muted))]">
             ✦ {T.guestNotice}
           </span>
-          <Link to="/auth" className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[hsl(var(--ink))] hover:underline">
+          <Link to="/auth" className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[hsl(var(--primary))] hover:underline">
             <LogIn className="h-3.5 w-3.5" /> {T.saveProgress} →
           </Link>
         </div>
@@ -273,10 +273,10 @@ export default function GuestSession() {
             <button
               key={s.id}
               onClick={() => setSubject(s)}
-              className={`text-[12px] font-medium px-3 h-8 rounded-lg border transition-all ${
+              className={`text-[12px] font-medium px-3 h-8 rounded-xl border transition-all ${
                 subject?.id === s.id
-                  ? "bg-[hsl(var(--ink))] text-[hsl(var(--background))] border-[hsl(var(--ink))] shadow-sm"
-                  : "border-[hsl(var(--hairline))] text-[hsl(var(--ink-muted))] hover:border-[hsl(var(--ink))] hover:text-[hsl(var(--ink))]"
+                  ? "btn-gradient text-white border-transparent shadow-sm"
+                  : "border-[hsl(var(--primary)/0.2)] text-[hsl(var(--ink-muted))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
               }`}
             >
               {subjectName(s)}
@@ -290,10 +290,10 @@ export default function GuestSession() {
           <div ref={scrollRef} className="flex-1 overflow-y-auto pr-2 space-y-6">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full min-h-[40vh] text-center px-8">
-                <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--ink))] flex items-center justify-center mb-5 shadow-surface-md">
-                  <Sparkles className="h-7 w-7 text-[hsl(var(--background))]" />
+                <div className="hero-icon w-16 h-16 mb-5">
+                  <Sparkles className="h-7 w-7 text-white" />
                 </div>
-                <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))] mb-2">Guest mode</p>
+                <p className="text-[12px] font-medium text-[hsl(var(--primary))] mb-2">Guest mode</p>
                 <p className="text-[15px] text-[hsl(var(--ink-muted))] max-w-sm leading-relaxed">
                   Type a problem below — or attach a screenshot.<br />
                   <span className="text-[hsl(var(--ink-faint))] text-[13px]">Your tutor will respond with a question, never the answer.</span>
@@ -324,8 +324,8 @@ export default function GuestSession() {
                 </button>
               </div>
             )}
-            <div className="rounded-xl border border-[hsl(var(--hairline))] bg-[hsl(var(--paper))] flex items-end gap-2 p-3 shadow-surface focus-within:border-[hsl(var(--ink))] focus-within:shadow-glow transition-all">
-              <label className="cursor-pointer p-2 rounded-lg hover:bg-[hsl(var(--muted))] shrink-0 transition-colors" title="Attach image">
+            <div className="rounded-xl border border-[hsl(var(--hairline))] bg-[hsl(var(--paper))] flex items-end gap-2 p-3 shadow-surface focus-primary transition-all">
+              <label className="cursor-pointer p-2 rounded-lg hover:bg-[hsl(var(--primary)/0.08)] shrink-0 transition-colors" title="Attach image">
                 <ImageIcon className="h-4 w-4 text-[hsl(var(--ink-muted))]" />
                 <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && handleImage(e.target.files[0])} />
               </label>
@@ -343,7 +343,7 @@ export default function GuestSession() {
               <button
                 onClick={send}
                 disabled={streaming || (!input.trim() && !image)}
-                className="shrink-0 w-9 h-9 rounded-lg bg-[hsl(var(--ink))] text-[hsl(var(--background))] flex items-center justify-center disabled:opacity-30 hover:opacity-80 active:scale-95 transition-all"
+                className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center disabled:opacity-30 hover:shadow-md active:scale-95 transition-all text-white btn-gradient"
               >
                 <Send className="h-4 w-4" />
               </button>
@@ -377,7 +377,7 @@ export default function GuestSession() {
                   <li key={slug}>
                     <div className="flex items-baseline justify-between gap-3 mb-1.5">
                       <div className="text-[14px] font-medium truncate">{f.name || slug}</div>
-                      <div className="font-mono text-[12px] font-semibold text-[hsl(var(--ink))]">
+                      <div className="font-mono text-[12px] font-semibold" style={{ background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                         {Math.round(f.mastery * 100)}%
                       </div>
                     </div>
@@ -387,21 +387,21 @@ export default function GuestSession() {
                     <div className="mt-2 flex items-center gap-1.5">
                       <button
                         onClick={() => adjustMastery(slug, -0.1)}
-                        className="rounded-md border border-[hsl(var(--hairline))] h-7 w-7 flex items-center justify-center hover:border-[hsl(var(--ink))] hover:text-[hsl(var(--ink))] transition-colors"
+                        className="rounded-xl border border-[hsl(var(--primary)/0.2)] h-7 w-7 flex items-center justify-center hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
                         title={T.decrease}
                       >
                         <Minus className="h-3 w-3" />
                       </button>
                       <button
                         onClick={() => adjustMastery(slug, 0.1)}
-                        className="rounded-md border border-[hsl(var(--hairline))] h-7 w-7 flex items-center justify-center hover:border-[hsl(var(--ink))] hover:text-[hsl(var(--ink))] transition-colors"
+                        className="rounded-xl border border-[hsl(var(--primary)/0.2)] h-7 w-7 flex items-center justify-center hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
                         title={T.increase}
                       >
                         <Plus className="h-3 w-3" />
                       </button>
                       <button
                         onClick={() => resetMastery(slug)}
-                        className="rounded-md border border-[hsl(var(--hairline))] h-7 px-2 flex items-center gap-1 text-[10px] font-medium hover:border-[hsl(var(--ink))] hover:text-[hsl(var(--ink))] transition-colors"
+                        className="rounded-xl border border-[hsl(var(--primary)/0.2)] h-7 px-2 flex items-center gap-1 text-[10px] font-medium hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
                         title={T.reset}
                       >
                         <RotateCcw className="h-2.5 w-2.5" /> {T.reset}
@@ -445,7 +445,7 @@ function Bubble({
         {msg.image_url && (
           <img src={msg.image_url} alt="problem" className="rounded-xl max-h-56 border border-[hsl(var(--hairline))]" />
         )}
-        <div className={`prose-chat bg-[hsl(var(--ink))] text-[hsl(var(--background))] px-4 py-3 rounded-2xl rounded-tr-md max-w-[78%] ${lang === "bn" ? "bn" : ""}`}>
+        <div className={`prose-chat user-bubble px-4 py-3 rounded-2xl rounded-tr-md max-w-[78%] ${lang === "bn" ? "bn" : ""}`}>
           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
             {msg.content}
           </ReactMarkdown>
@@ -456,20 +456,20 @@ function Bubble({
 
   return (
     <div className="flex gap-3 animate-[inkFade_0.25s_ease-out]">
-      <div className="shrink-0 w-8 h-8 rounded-lg bg-[hsl(var(--ink))] flex items-center justify-center mt-1">
-        <span className="text-[hsl(var(--background))] text-[11px] font-bold">AI</span>
+      <div className="ai-avatar mt-1">
+        <span className="text-white text-[11px] font-bold">AI</span>
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-[11px] font-medium text-[hsl(var(--ink-muted))]">tutor</span>
           {msg.difficulty && (
-            <span className="text-[10px] font-medium text-[hsl(var(--ink-muted))] bg-[hsl(var(--muted))] rounded-md px-1.5 py-0.5">{msg.difficulty}</span>
+            <span className="tag-primary">{msg.difficulty}</span>
           )}
         </div>
         {msg.image_url && (
           <img src={msg.image_url} alt="problem" className="rounded-xl max-h-56 mb-2 border border-[hsl(var(--hairline))]" />
         )}
-        <div className={`prose-chat bg-[hsl(var(--paper))] border border-[hsl(var(--hairline))] px-4 py-3 rounded-2xl rounded-tl-md ${lang === "bn" ? "bn" : ""}`}>
+        <div className={`prose-chat tutor-bubble px-4 py-3 rounded-2xl rounded-tl-md ${lang === "bn" ? "bn" : ""}`}>
           {msg.content ? (
             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
               {msg.content}
@@ -487,7 +487,7 @@ function Bubble({
                 <button
                   key={fb}
                   onClick={() => onFeedback(fb)}
-                  className="text-[11px] font-medium px-3 h-8 rounded-lg border border-[hsl(var(--hairline))] text-[hsl(var(--ink-muted))] hover:border-[hsl(var(--ink))] hover:text-[hsl(var(--ink))] transition-all"
+                  className="text-[11px] font-medium px-3 h-8 rounded-xl border border-[hsl(var(--primary)/0.2)] text-[hsl(var(--ink-muted))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-all"
                 >
                   {icons[fb]} {labels[fb]}
                 </button>
@@ -503,13 +503,13 @@ function Bubble({
 function Thinking() {
   return (
     <div className="flex gap-3">
-      <div className="shrink-0 w-8 h-8 rounded-lg bg-[hsl(var(--ink))] flex items-center justify-center">
-        <span className="text-[hsl(var(--background))] text-[11px] font-bold">AI</span>
+      <div className="ai-avatar">
+        <span className="text-white text-[11px] font-bold">AI</span>
       </div>
-      <div className="flex gap-2 items-center py-3 px-4 bg-[hsl(var(--paper))] border border-[hsl(var(--hairline))] rounded-2xl rounded-tl-md">
-        <span className="thinking-dot h-2 w-2 bg-[hsl(var(--ink-faint))] rounded-full" />
-        <span className="thinking-dot h-2 w-2 bg-[hsl(var(--ink-faint))] rounded-full" />
-        <span className="thinking-dot h-2 w-2 bg-[hsl(var(--ink-faint))] rounded-full" />
+      <div className="flex gap-2 items-center py-3 px-4 tutor-bubble rounded-2xl rounded-tl-md">
+        <span className="thinking-dot h-2 w-2 rounded-full" />
+        <span className="thinking-dot h-2 w-2 rounded-full" />
+        <span className="thinking-dot h-2 w-2 rounded-full" />
       </div>
     </div>
   );

@@ -20,30 +20,30 @@ export function AppHeader() {
         to={to}
         className={`relative text-[13px] font-medium tracking-wide transition-colors py-1 ${
           active
-            ? "text-[hsl(var(--ink))]"
-            : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))]"
+            ? "text-[hsl(var(--primary))]"
+            : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))]"
         }`}
       >
         {label}
         {active && (
-          <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] rounded-full bg-[hsl(var(--ink))]" />
+          <span className="nav-active-bar" />
         )}
       </Link>
     );
   };
 
   return (
-    <header className="shrink-0 sticky top-0 z-50 border-b border-[hsl(var(--hairline))] bg-[hsl(var(--background))]/80 backdrop-blur-xl">
+    <header className="shrink-0 sticky top-0 z-50 border-b border-[hsl(var(--hairline))] bg-[hsl(var(--background))]/70 backdrop-blur-xl">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-auto sm:h-16 py-3 sm:py-0 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
         <div className="flex items-center justify-between w-full sm:w-auto">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[hsl(var(--ink))] text-[hsl(var(--background))] text-sm font-bold">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl text-white text-sm font-bold" style={{ background: 'var(--gradient-primary)' }}>
               S
             </span>
             <span className="text-[18px] font-bold tracking-tight">
               Socratic
             </span>
-            <span className="text-[12px] text-[hsl(var(--ink-faint))] font-medium hidden sm:inline">
+            <span className="text-[12px] text-[hsl(var(--primary))] font-semibold hidden sm:inline opacity-70">
               Tutor
             </span>
           </Link>
@@ -51,7 +51,7 @@ export function AppHeader() {
             <ThemeToggle />
             <button
               onClick={toggle}
-              className="text-[11px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))] rounded-lg px-2.5 h-8 bg-[hsl(var(--muted))] transition-colors"
+              className="text-[11px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] rounded-lg px-2.5 h-8 bg-[hsl(var(--muted))] transition-colors"
               aria-label="Toggle language"
             >
               {T.lang === "EN" ? "EN" : "BN"}{" "}
@@ -80,7 +80,7 @@ export function AppHeader() {
               <ThemeToggle />
               <button
                 onClick={toggle}
-                className="text-[11px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))] rounded-lg px-2.5 h-8 bg-[hsl(var(--muted))] transition-colors"
+                className="text-[11px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] rounded-lg px-2.5 h-8 bg-[hsl(var(--muted))] transition-colors"
                 aria-label="Toggle language"
               >
                 {T.lang}{" "}

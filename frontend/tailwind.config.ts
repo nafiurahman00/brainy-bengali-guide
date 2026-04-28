@@ -78,6 +78,7 @@ export default {
         "surface-md": "var(--shadow-md)",
         "surface-lg": "var(--shadow-lg)",
         "glow": "var(--shadow-glow)",
+        "glow-lg": "var(--shadow-glow-lg)",
       },
       keyframes: {
         "accordion-down": {
@@ -89,12 +90,17 @@ export default {
           to: { height: "0" },
         },
         "slide-up": {
-          from: { opacity: "0", transform: "translateY(12px)" },
+          from: { opacity: "0", transform: "translateY(16px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "fade-in": {
           from: { opacity: "0" },
           to: { opacity: "1" },
+        },
+        "pop-in": {
+          "0%": { opacity: "0", transform: "scale(0.9) translateY(4px)" },
+          "70%": { transform: "scale(1.02) translateY(-1px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
         },
       },
       animation: {
@@ -102,6 +108,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "slide-up": "slide-up 0.4s ease-out",
         "fade-in": "fade-in 0.3s ease-out",
+        "pop-in": "pop-in 0.35s ease-out both",
       },
     },
   },

@@ -59,8 +59,10 @@ export default function Knowledge() {
       <AppHeader />
       <main className="flex-1 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 animate-slide-up">
         <div className="flex items-center gap-3 mb-2">
-          <Brain className="h-5 w-5 text-[hsl(var(--ink-muted))]" />
-          <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))] tracking-wide uppercase">Knowledge Map</p>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'var(--gradient-primary)' }}>
+            <Brain className="h-4 w-4 text-white" />
+          </div>
+          <p className="text-[12px] font-medium text-[hsl(var(--primary))] tracking-wide uppercase">Knowledge Map</p>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold mb-1">{T.knowledge}</h1>
         <p className="text-[14px] text-[hsl(var(--ink-muted))] mb-8 sm:mb-10">
@@ -73,7 +75,7 @@ export default function Knowledge() {
             return (
               <section key={s.id}>
                 <div className="border-b border-[hsl(var(--hairline))] pb-3 mb-6 flex items-baseline gap-3">
-                  <span className="text-[12px] font-mono font-semibold text-[hsl(var(--ink-muted))]">{String(sIdx + 1).padStart(2, "0")}</span>
+                  <span className="text-[12px] font-mono font-semibold" style={{ background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{String(sIdx + 1).padStart(2, "0")}</span>
                   <h2 className="text-xl sm:text-2xl font-bold">{lname(s)}</h2>
                 </div>
 
@@ -82,7 +84,7 @@ export default function Knowledge() {
                     const cSkills = skills.filter((sk) => sk.concept_id === c.id);
                     return (
                       <div key={c.id} className="glass-card p-5">
-                        <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))] mb-4 pb-2 border-b border-[hsl(var(--hairline))]">{lname(c)}</p>
+                        <p className="text-[12px] font-medium text-[hsl(var(--primary))] mb-4 pb-2 border-b border-[hsl(var(--hairline))]">{lname(c)}</p>
                         <ul className="space-y-4">
                           {cSkills.map((sk) => {
                             const k = ks[sk.id];
@@ -90,7 +92,7 @@ export default function Knowledge() {
                               <li key={sk.id}>
                                 <div className="flex items-baseline justify-between gap-3 mb-1.5">
                                   <div className="text-[15px] font-medium">{lname(sk)}</div>
-                                  <div className={`font-mono text-[12px] font-semibold ${k ? "text-[hsl(var(--ink))]" : "text-[hsl(var(--ink-faint))]"}`}>
+                                  <div className={`font-mono text-[12px] font-semibold ${k ? "" : "text-[hsl(var(--ink-faint))]"}`} style={k ? { background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' } : undefined}>
                                     {k ? `${Math.round(k.mastery * 100)}%` : "—"}
                                   </div>
                                 </div>
@@ -110,7 +112,7 @@ export default function Knowledge() {
                                       {k.error_tags?.length > 0 && (
                                         <span className="flex gap-1 flex-wrap">
                                           {k.error_tags.slice(0, 3).map((tag) => (
-                                            <span key={tag} className="bg-[hsl(var(--muted))] rounded-md px-2 py-0.5 text-[hsl(var(--ink-muted))]">
+                                            <span key={tag} className="bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] rounded-md px-2 py-0.5">
                                               {tag}
                                             </span>
                                           ))}

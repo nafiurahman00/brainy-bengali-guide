@@ -91,7 +91,7 @@ export default function SessionPage() {
       <div className="shrink-0 border-b border-[hsl(var(--hairline))] bg-[hsl(var(--paper))]">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <button onClick={() => nav("/")} className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))] transition-colors">
+            <button onClick={() => nav("/")} className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] transition-colors">
               <ArrowLeft className="h-3.5 w-3.5" /> {T.dashboard}
             </button>
             <div className="text-base sm:text-lg font-semibold mt-1">
@@ -110,10 +110,10 @@ export default function SessionPage() {
             {loading && <div className="text-[12px] font-medium text-[hsl(var(--ink-muted))]">loading…</div>}
             {!loading && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full min-h-[40vh] text-center px-8">
-                <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--ink))] flex items-center justify-center mb-5 shadow-surface-md">
-                  <Sparkles className="h-7 w-7 text-[hsl(var(--background))]" />
+                <div className="hero-icon w-16 h-16 mb-5">
+                  <Sparkles className="h-7 w-7 text-white" />
                 </div>
-                <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))] mb-2">First turn</p>
+                <p className="text-[12px] font-medium text-[hsl(var(--primary))] mb-2">First turn</p>
                 <p className="text-[15px] text-[hsl(var(--ink-muted))] max-w-sm leading-relaxed">
                   Type a problem below — or attach a screenshot.<br />
                   <span className="text-[hsl(var(--ink-faint))] text-[13px]">Your tutor will respond with a question, never the answer.</span>
@@ -144,8 +144,8 @@ export default function SessionPage() {
                 </button>
               </div>
             )}
-            <div className="rounded-xl border border-[hsl(var(--hairline))] bg-[hsl(var(--paper))] flex items-end gap-2 p-3 shadow-surface focus-within:border-[hsl(var(--ink))] focus-within:shadow-glow transition-all">
-              <label className="cursor-pointer p-2 rounded-lg hover:bg-[hsl(var(--muted))] shrink-0 transition-colors" title="Attach image">
+            <div className="rounded-xl border border-[hsl(var(--hairline))] bg-[hsl(var(--paper))] flex items-end gap-2 p-3 shadow-surface focus-primary transition-all">
+              <label className="cursor-pointer p-2 rounded-lg hover:bg-[hsl(var(--primary)/0.08)] shrink-0 transition-colors" title="Attach image">
                 <ImageIcon className="h-4 w-4 text-[hsl(var(--ink-muted))]" />
                 <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && handleImage(e.target.files[0])} />
               </label>
@@ -163,7 +163,7 @@ export default function SessionPage() {
               <button
                 onClick={handleSend}
                 disabled={streaming || (!input.trim() && !image)}
-                className="shrink-0 w-9 h-9 rounded-lg bg-[hsl(var(--ink))] text-[hsl(var(--background))] flex items-center justify-center disabled:opacity-30 hover:opacity-80 active:scale-95 transition-all"
+                className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center disabled:opacity-30 hover:shadow-md active:scale-95 transition-all text-white btn-gradient"
               >
                 <Send className="h-4 w-4" />
               </button>
@@ -175,8 +175,8 @@ export default function SessionPage() {
         <aside className="lg:col-span-4 border-t border-[hsl(var(--hairline))] lg:border-t-0 lg:border-l lg:border-[hsl(var(--hairline))] pt-6 lg:pt-0 lg:pl-6 overflow-y-auto h-full pr-2 min-h-0 flex flex-col">
           <Tabs defaultValue="visualization" className="flex flex-col flex-1 min-h-0">
             <TabsList className="self-start bg-[hsl(var(--muted))] h-8 mb-4">
-              <TabsTrigger value="visualization" className="text-[11px] h-6 px-2.5">Visualization</TabsTrigger>
-              <TabsTrigger value="pipeline" className="text-[11px] h-6 px-2.5">Pipeline</TabsTrigger>
+              <TabsTrigger value="visualization" className="text-[11px] h-6 px-2.5 data-[state=active]:text-[hsl(var(--primary))]">Visualization</TabsTrigger>
+              <TabsTrigger value="pipeline" className="text-[11px] h-6 px-2.5 data-[state=active]:text-[hsl(var(--primary))]">Pipeline</TabsTrigger>
             </TabsList>
 
             <TabsContent value="visualization" className="flex-1 min-h-0 mt-0 outline-none">
@@ -245,7 +245,7 @@ function Bubble({
         {msg.image_url && (
           <img src={msg.image_url} alt="problem" className="rounded-xl max-h-56 border border-[hsl(var(--hairline))]" />
         )}
-        <div className={`prose-chat bg-[hsl(var(--ink))] text-[hsl(var(--background))] px-4 py-3 rounded-2xl rounded-tr-md max-w-[78%] ${lang === "bn" ? "bn" : ""}`}>
+        <div className={`prose-chat user-bubble px-4 py-3 rounded-2xl rounded-tr-md max-w-[78%] ${lang === "bn" ? "bn" : ""}`}>
           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
             {msg.content}
           </ReactMarkdown>
@@ -256,20 +256,20 @@ function Bubble({
 
   return (
     <div className="flex gap-3 animate-[inkFade_0.25s_ease-out]">
-      <div className="shrink-0 w-8 h-8 rounded-lg bg-[hsl(var(--ink))] flex items-center justify-center mt-1">
-        <span className="text-[hsl(var(--background))] text-[11px] font-bold">AI</span>
+      <div className="ai-avatar mt-1">
+        <span className="text-white text-[11px] font-bold">AI</span>
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-[11px] font-medium text-[hsl(var(--ink-muted))]">tutor</span>
           {msg.difficulty && (
-            <span className="text-[10px] font-medium text-[hsl(var(--ink-muted))] bg-[hsl(var(--muted))] rounded-md px-1.5 py-0.5">{msg.difficulty}</span>
+            <span className="tag-primary">{msg.difficulty}</span>
           )}
         </div>
         {msg.image_url && (
           <img src={msg.image_url} alt="problem" className="rounded-xl max-h-56 mb-2 border border-[hsl(var(--hairline))]" />
         )}
-        <div className={`prose-chat bg-[hsl(var(--paper))] border border-[hsl(var(--hairline))] px-4 py-3 rounded-2xl rounded-tl-md ${lang === "bn" ? "bn" : ""}`}>
+        <div className={`prose-chat tutor-bubble px-4 py-3 rounded-2xl rounded-tl-md ${lang === "bn" ? "bn" : ""}`}>
           {msg.content ? (
             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
               {msg.content}
@@ -289,10 +289,10 @@ function Bubble({
                   key={fb}
                   disabled={!!msg.feedback}
                   onClick={() => onFeedback(fb)}
-                  className={`text-[11px] font-medium px-3 h-8 rounded-lg border transition-all ${
+                  className={`text-[11px] font-medium px-3 h-8 rounded-xl border transition-all ${
                     active
-                      ? "bg-[hsl(var(--ink))] text-[hsl(var(--background))] border-[hsl(var(--ink))]"
-                      : "border-[hsl(var(--hairline))] text-[hsl(var(--ink-muted))] hover:border-[hsl(var(--ink))] hover:text-[hsl(var(--ink))] disabled:opacity-30"
+                      ? "btn-gradient border-transparent text-white"
+                      : "border-[hsl(var(--primary)/0.2)] text-[hsl(var(--ink-muted))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] disabled:opacity-30"
                   }`}
                 >
                   {icons[fb]} {labels[fb]}
@@ -309,13 +309,13 @@ function Bubble({
 function Thinking() {
   return (
     <div className="flex gap-3">
-      <div className="shrink-0 w-8 h-8 rounded-lg bg-[hsl(var(--ink))] flex items-center justify-center">
-        <span className="text-[hsl(var(--background))] text-[11px] font-bold">AI</span>
+      <div className="ai-avatar">
+        <span className="text-white text-[11px] font-bold">AI</span>
       </div>
-      <div className="flex gap-2 items-center py-3 px-4 bg-[hsl(var(--paper))] border border-[hsl(var(--hairline))] rounded-2xl rounded-tl-md">
-        <span className="thinking-dot h-2 w-2 bg-[hsl(var(--ink-faint))] rounded-full" />
-        <span className="thinking-dot h-2 w-2 bg-[hsl(var(--ink-faint))] rounded-full" />
-        <span className="thinking-dot h-2 w-2 bg-[hsl(var(--ink-faint))] rounded-full" />
+      <div className="flex gap-2 items-center py-3 px-4 tutor-bubble rounded-2xl rounded-tl-md">
+        <span className="thinking-dot h-2 w-2 rounded-full" />
+        <span className="thinking-dot h-2 w-2 rounded-full" />
+        <span className="thinking-dot h-2 w-2 rounded-full" />
       </div>
     </div>
   );
@@ -341,13 +341,13 @@ function PipelinePanel({
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => onAdjust(-0.1)}
-              className="rounded-lg border border-[hsl(var(--hairline))] h-8 px-3 flex items-center gap-1.5 text-[11px] font-medium hover:border-[hsl(var(--ink))] hover:text-[hsl(var(--ink))] transition-colors"
+              className="rounded-xl border border-[hsl(var(--primary)/0.2)] h-8 px-3 flex items-center gap-1.5 text-[11px] font-medium hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
             >
               <Minus className="h-3 w-3" /> 10%
             </button>
             <button
               onClick={() => onAdjust(0.1)}
-              className="rounded-lg border border-[hsl(var(--hairline))] h-8 px-3 flex items-center gap-1.5 text-[11px] font-medium hover:border-[hsl(var(--ink))] hover:text-[hsl(var(--ink))] transition-colors"
+              className="rounded-xl border border-[hsl(var(--primary)/0.2)] h-8 px-3 flex items-center gap-1.5 text-[11px] font-medium hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
             >
               <Plus className="h-3 w-3" /> 10%
             </button>

@@ -51,6 +51,18 @@ export default function Dashboard() {
 
   const subjectName = (s?: Subject) => s ? (lang === "bn" && s.name_bn ? s.name_bn : s.name) : "";
 
+  // Color palette for subject cards
+  const subjectColors = [
+    "from-violet-500 to-purple-600",
+    "from-blue-500 to-cyan-500",
+    "from-emerald-500 to-teal-600",
+    "from-orange-500 to-rose-500",
+    "from-pink-500 to-fuchsia-600",
+    "from-amber-500 to-orange-600",
+    "from-indigo-500 to-blue-600",
+    "from-teal-500 to-emerald-600",
+  ];
+
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
@@ -58,7 +70,7 @@ export default function Dashboard() {
         <div className="animate-slide-up">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
             <div>
-              <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))] tracking-wide mb-1">Your sessions</p>
+              <p className="text-[12px] font-medium text-[hsl(var(--primary))] tracking-wide mb-1 uppercase">Your sessions</p>
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{T.dashboard}</h1>
             </div>
             <InkButton variant="solid" onClick={() => setPicking((p) => !p)}>
@@ -67,18 +79,18 @@ export default function Dashboard() {
           </div>
 
           {picking && (
-            <div className="glass-card p-6 mb-8">
+            <div className="glass-card p-6 mb-8 animate-pop-in">
               <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))] mb-4">{T.pickSubject}</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {subjects.map((s) => (
+                {subjects.map((s, i) => (
                   <button
                     key={s.id}
                     disabled={creating}
                     onClick={() => startSession(s)}
-                    className="group relative h-24 flex flex-col items-center justify-center gap-1.5 rounded-xl border border-[hsl(var(--hairline))] bg-[hsl(var(--paper))] hover:border-[hsl(var(--ink))] hover:bg-[hsl(var(--ink))] hover:text-[hsl(var(--background))] transition-all duration-200"
+                    className={`group relative h-24 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br ${subjectColors[i % subjectColors.length]} text-white shadow-md hover:shadow-lg hover:scale-[1.03] active:scale-[0.98] transition-all duration-200`}
                   >
-                    <span className="text-base font-semibold">{subjectName(s)}</span>
-                    <span className="text-[10px] uppercase tracking-wider text-[hsl(var(--ink-faint))] group-hover:text-[hsl(var(--background))]/70 transition-colors">
+                    <span className="text-base font-semibold drop-shadow-sm">{subjectName(s)}</span>
+                    <span className="text-[10px] uppercase tracking-wider opacity-70">
                       {s.slug}
                     </span>
                   </button>
@@ -89,7 +101,7 @@ export default function Dashboard() {
 
           {sessions.length === 0 ? (
             <div className="glass-card p-14 text-center">
-              <BookOpen className="h-10 w-10 text-[hsl(var(--ink-faint))] mx-auto mb-4 opacity-40" />
+              <BookOpen className="h-10 w-10 text-[hsl(var(--primary))] mx-auto mb-4 opacity-50" />
               <p className="text-[15px] text-[hsl(var(--ink-muted))]">{T.noSessions}</p>
             </div>
           ) : (
@@ -98,10 +110,10 @@ export default function Dashboard() {
                 <Link
                   key={s.id}
                   to={`/session/${s.id}`}
-                  className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-[hsl(var(--muted))] transition-colors group"
+                  className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-[hsl(var(--primary)/0.04)] transition-colors group"
                 >
                   <div className="flex items-center gap-4 min-w-0">
-                    <span className="text-[12px] font-mono font-semibold text-[hsl(var(--ink-muted))] shrink-0 w-7 text-center">
+                    <span className="text-[12px] font-mono font-semibold shrink-0 w-7 text-center" style={{ background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <div className="min-w-0">
@@ -111,7 +123,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-[hsl(var(--ink-faint))] group-hover:text-[hsl(var(--ink))] group-hover:translate-x-0.5 transition-all shrink-0" />
+                  <ArrowRight className="h-4 w-4 text-[hsl(var(--ink-faint))] group-hover:text-[hsl(var(--primary))] group-hover:translate-x-0.5 transition-all shrink-0" />
                 </Link>
               ))}
             </div>

@@ -41,10 +41,10 @@ export default function ResetPassword() {
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
         <div className="w-full max-w-md animate-slide-up">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[hsl(var(--ink))] text-[hsl(var(--background))] mb-5 shadow-surface-md">
+            <div className="hero-icon w-14 h-14 text-white mb-5">
               <KeyRound className="h-6 w-6" />
             </div>
-            <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))] mb-2 uppercase">Recovery</p>
+            <p className="text-[12px] font-medium text-[hsl(var(--primary))] mb-2 uppercase">Recovery</p>
             <h1 className="text-2xl sm:text-3xl font-bold">Set a new password</h1>
           </div>
           <form onSubmit={submit} className="glass-card p-6 space-y-4">
@@ -54,7 +54,7 @@ export default function ResetPassword() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full h-11 px-4 rounded-xl border border-[hsl(var(--hairline))] bg-[hsl(var(--muted))] text-[14px] outline-none focus:border-[hsl(var(--ink))] focus:shadow-glow transition-all"
+                className="block w-full h-11 px-4 rounded-xl border border-[hsl(var(--hairline))] bg-[hsl(var(--muted))] text-[14px] outline-none focus:border-[hsl(var(--primary))] focus:shadow-glow transition-all"
                 autoComplete="new-password"
                 disabled={!ready}
               />

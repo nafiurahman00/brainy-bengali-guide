@@ -68,7 +68,7 @@ export default function Auth() {
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
         <div className="w-full max-w-md animate-slide-up">
           <div className="mb-8 sm:mb-10 text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[hsl(var(--ink))] text-[hsl(var(--background))] text-2xl font-bold mb-5 shadow-surface-md">
+            <div className="hero-icon w-14 h-14 text-white text-2xl font-bold mb-5">
               S
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{T.appName}</h1>
@@ -81,16 +81,16 @@ export default function Auth() {
                 onClick={() => setMode("signin")}
                 className={`h-12 text-[13px] font-medium tracking-wide transition-all ${
                   mode === "signin"
-                    ? "bg-[hsl(var(--ink))] text-[hsl(var(--background))]"
-                    : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))] hover:bg-[hsl(var(--muted))]"
+                    ? "btn-gradient text-white"
+                    : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.06)]"
                 }`}
               >{T.signIn}</button>
               <button
                 onClick={() => setMode("signup")}
                 className={`h-12 text-[13px] font-medium tracking-wide transition-all ${
                   mode === "signup"
-                    ? "bg-[hsl(var(--ink))] text-[hsl(var(--background))]"
-                    : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))] hover:bg-[hsl(var(--muted))]"
+                    ? "btn-gradient text-white"
+                    : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.06)]"
                 }`}
               >{T.signUp}</button>
             </div>
@@ -140,13 +140,13 @@ export default function Auth() {
               <div className="text-center">
                 {mode === "signin" && (
                   <button type="button" onClick={() => setMode("forgot")}
-                    className="text-[12px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))] transition-colors">
+                    className="text-[12px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] transition-colors">
                     {T.forgot}
                   </button>
                 )}
                 {mode === "forgot" && (
                   <button type="button" onClick={() => setMode("signin")}
-                    className="text-[12px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))] transition-colors">
+                    className="text-[12px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] transition-colors">
                     ← {T.backToSignIn}
                   </button>
                 )}
@@ -162,14 +162,14 @@ export default function Auth() {
             <button
               type="button"
               onClick={() => nav("/guest")}
-              className="text-[13px] font-medium text-[hsl(var(--ink))] hover:underline transition-colors"
+              className="text-[13px] font-medium text-[hsl(var(--primary))] hover:underline transition-colors"
             >
               {T.continueGuest} →
             </button>
           </div>
         </div>
       </main>
-      <style>{`.auth-input{display:block;width:100%;height:44px;padding:0 14px;border:1px solid hsl(var(--hairline));border-radius:10px;background:hsl(var(--muted));font-family:'Inter',system-ui,sans-serif;font-size:14px;color:hsl(var(--ink));outline:none;transition:border-color 0.2s,box-shadow 0.2s}.auth-input:focus{border-color:hsl(var(--ink));box-shadow:var(--shadow-glow)}`}</style>
+      <style>{`.auth-input{display:block;width:100%;height:44px;padding:0 14px;border:1px solid hsl(var(--hairline));border-radius:12px;background:hsl(var(--muted));font-family:'Inter',system-ui,sans-serif;font-size:14px;color:hsl(var(--ink));outline:none;transition:border-color 0.2s,box-shadow 0.2s}.auth-input:focus{border-color:hsl(var(--primary));box-shadow:var(--shadow-glow)}`}</style>
     </div>
   );
 }
