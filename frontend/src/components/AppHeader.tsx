@@ -13,12 +13,15 @@ export function AppHeader() {
   const nav = useNavigate();
 
   const NavLink = ({ to, label }: { to: string; label: string }) => {
-    const active = loc.pathname === to || (to !== "/" && loc.pathname.startsWith(to));
+    const active =
+      loc.pathname === to || (to !== "/" && loc.pathname.startsWith(to));
     return (
       <Link
         to={to}
         className={`relative text-[13px] font-medium tracking-wide transition-colors py-1 ${
-          active ? "text-[hsl(var(--ink))]" : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))]"
+          active
+            ? "text-[hsl(var(--ink))]"
+            : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))]"
         }`}
       >
         {label}
@@ -34,9 +37,15 @@ export function AppHeader() {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-auto sm:h-16 py-3 sm:py-0 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
         <div className="flex items-center justify-between w-full sm:w-auto">
           <Link to="/" className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[hsl(var(--ink))] text-[hsl(var(--background))] text-sm font-bold">S</span>
-            <span className="text-[18px] font-bold tracking-tight">Socratic</span>
-            <span className="text-[12px] text-[hsl(var(--ink-faint))] font-medium hidden sm:inline">Tutor</span>
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[hsl(var(--ink))] text-[hsl(var(--background))] text-sm font-bold">
+              S
+            </span>
+            <span className="text-[18px] font-bold tracking-tight">
+              Socratic
+            </span>
+            <span className="text-[12px] text-[hsl(var(--ink-faint))] font-medium hidden sm:inline">
+              Tutor
+            </span>
           </Link>
           <div className="flex sm:hidden items-center gap-2">
             <ThemeToggle />
@@ -45,8 +54,11 @@ export function AppHeader() {
               className="text-[11px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))] rounded-lg px-2.5 h-8 bg-[hsl(var(--muted))] transition-colors"
               aria-label="Toggle language"
             >
-              {T.lang === "EN" ? "EN" : "BN"} <span className="mx-0.5 text-[hsl(var(--ink-faint))]">·</span>{" "}
-              <span className="text-[hsl(var(--ink-faint))]">{T.altLang === "EN" ? "EN" : "BN"}</span>
+              {T.lang === "EN" ? "EN" : "BN"}{" "}
+              <span className="mx-0.5 text-[hsl(var(--ink-faint))]">·</span>{" "}
+              <span className="text-[hsl(var(--ink-faint))]">
+                {T.altLang === "EN" ? "EN" : "BN"}
+              </span>
             </button>
           </div>
         </div>
@@ -71,21 +83,29 @@ export function AppHeader() {
                 className="text-[11px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--ink))] rounded-lg px-2.5 h-8 bg-[hsl(var(--muted))] transition-colors"
                 aria-label="Toggle language"
               >
-                {T.lang} <span className="mx-0.5 text-[hsl(var(--ink-faint))]">·</span>{" "}
-                <span className="text-[hsl(var(--ink-faint))]">{T.altLang}</span>
+                {T.lang}{" "}
+                <span className="mx-0.5 text-[hsl(var(--ink-faint))]">·</span>{" "}
+                <span className="text-[hsl(var(--ink-faint))]">
+                  {T.altLang}
+                </span>
               </button>
             </div>
             {user ? (
-              <InkButton
-                variant="ghost"
-                size="sm"
-                onClick={async () => {
-                  await signOut();
-                  nav("/auth");
-                }}
-              >
-                {T.signOut}
-              </InkButton>
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] font-medium text-[hsl(var(--ink-muted))] hidden sm:inline truncate max-w-[150px]">
+                  {user.user_metadata?.display_name ?? user.email}
+                </span>
+                <InkButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    await signOut();
+                    nav("/auth");
+                  }}
+                >
+                  {T.signOut}
+                </InkButton>
+              </div>
             ) : (
               <InkButton variant="solid" size="sm" onClick={() => nav("/auth")}>
                 {T.signIn}
