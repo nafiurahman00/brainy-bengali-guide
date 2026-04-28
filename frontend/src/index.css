@@ -1,0 +1,234 @@
+@import "katex/dist/katex.min.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Socratic Tutor — Modern B&W Design System
+   Clean black & white, soft depth, rounded surfaces, premium feel.
+   ========================================================================== */
+
+@layer base {
+  :root {
+    --background: 0 0% 99%;
+    --foreground: 0 0% 9%;
+
+    --paper: 0 0% 96.5%;
+    --ink: 0 0% 9%;
+    --ink-muted: 0 0% 40%;
+    --ink-faint: 0 0% 60%;
+    --hairline: 0 0% 89%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 0 0% 9%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 89%;
+    --input: 0 0% 89%;
+    --ring: 0 0% 9%;
+
+    --radius: 12px;
+
+    --sidebar-background: 0 0% 96.5%;
+    --sidebar-foreground: 0 0% 9%;
+    --sidebar-primary: 0 0% 9%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 93%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 89%;
+    --sidebar-ring: 0 0% 9%;
+
+    --success: 160 60% 40%;
+    --warning: 38 92% 50%;
+    --info: 210 90% 50%;
+
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 4px 0 rgb(0 0 0 / 0.04);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+    --shadow-glow: 0 0 0 3px rgb(0 0 0 / 0.06);
+  }
+
+  .dark {
+    --background: 0 0% 7%;
+    --foreground: 0 0% 93%;
+    --paper: 0 0% 10%;
+    --ink: 0 0% 93%;
+    --ink-muted: 0 0% 58%;
+    --ink-faint: 0 0% 40%;
+    --hairline: 0 0% 18%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 93%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 93%;
+    --primary: 0 0% 93%;
+    --primary-foreground: 0 0% 7%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 93%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 58%;
+    --accent: 0 0% 93%;
+    --accent-foreground: 0 0% 7%;
+    --destructive: 0 72% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 93%;
+
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.15), 0 1px 4px 0 rgb(0 0 0 / 0.10);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    --shadow-glow: 0 0 0 3px rgb(255 255 255 / 0.08);
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html, body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  code, pre, kbd, .mono {
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  }
+  :lang(bn), .bn {
+    font-family: 'Noto Serif Bengali', serif;
+  }
+}
+
+@layer components {
+  /* ── Surface utilities ───────────────────────────────────────── */
+  .hairline      { @apply border border-[hsl(var(--hairline))] rounded-xl; }
+  .hairline-b    { @apply border-b border-[hsl(var(--hairline))]; }
+  .hairline-t    { @apply border-t border-[hsl(var(--hairline))]; }
+  .hairline-l    { @apply border-l border-[hsl(var(--hairline))]; }
+  .hairline-r    { @apply border-r border-[hsl(var(--hairline))]; }
+
+  /* ── Chapter / meta labels ──────────────────────────────────── */
+  .chapter-label {
+    @apply text-[11px] uppercase tracking-[0.08em] text-[hsl(var(--ink-muted))] font-medium;
+  }
+
+  .bracket-num {
+    @apply text-[11px] tracking-wide text-[hsl(var(--ink))] font-semibold;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  .bracket-num::before { content: ""; }
+  .bracket-num::after  { content: ""; }
+
+  /* ── Chat prose ─────────────────────────────────────────────── */
+  .prose-chat {
+    @apply text-[15px] sm:text-[15.5px] leading-[1.8];
+  }
+  .prose-chat p { @apply my-2; }
+  .prose-chat p:first-child { @apply mt-0; }
+  .prose-chat p:last-child { @apply mb-0; }
+  .prose-chat strong { @apply font-semibold; }
+  .prose-chat em { @apply italic; }
+  .prose-chat code {
+    @apply px-1.5 py-0.5 bg-[hsl(var(--muted))] text-[13px] rounded-md;
+  }
+  .prose-chat pre {
+    @apply p-4 bg-[hsl(var(--muted))] overflow-x-auto my-3 rounded-xl border border-[hsl(var(--hairline))];
+  }
+  .prose-chat ul, .prose-chat ol { @apply pl-5 my-2; }
+  .prose-chat ul li { @apply list-disc; }
+  .prose-chat ol li { @apply list-decimal; }
+  .prose-chat blockquote {
+    @apply pl-4 border-l-[3px] border-[hsl(var(--ink))] my-3 italic text-[hsl(var(--ink-muted))];
+  }
+  .prose-chat .katex { font-size: 1.05em; }
+  .prose-chat .katex-display { @apply my-3; }
+
+  /* ── Progress bars ──────────────────────────────────────────── */
+  .bar-track {
+    @apply relative h-[6px] w-full bg-[hsl(var(--muted))] rounded-full overflow-hidden;
+  }
+  .bar-fill {
+    @apply absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out;
+    background: hsl(var(--ink));
+  }
+
+  .paper { background-color: hsl(var(--paper)); }
+
+  /* ── Glass card ─────────────────────────────────────────────── */
+  .glass-card {
+    @apply rounded-2xl border border-[hsl(var(--hairline))];
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-md);
+  }
+
+  .glass-card-elevated {
+    @apply rounded-2xl border border-[hsl(var(--hairline))];
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* ── Animations ─────────────────────────────────────────────── */
+@keyframes inkFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes thinkingPulse {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.85); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+.thinking-dot {
+  animation: thinkingPulse 1.4s infinite ease-in-out both;
+}
+.thinking-dot:nth-child(1) { animation-delay: -0.32s; }
+.thinking-dot:nth-child(2) { animation-delay: -0.16s; }
+
+/* ── Custom scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--hairline));
+  border-radius: 100px;
+}
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--ink-faint)); }
+
+/* ── Selection color ──────────────────────────────────────── */
+::selection {
+  background: hsl(var(--ink) / 0.12);
+  color: hsl(var(--ink));
+}
+
+/* ── Focus ring ───────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 6px;
+}
