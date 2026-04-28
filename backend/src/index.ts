@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { tutorRoute } from "./routes/tutor.js";
 import { simulatorRoute } from "./routes/simulator.js";
+import { visualizeRoute } from "./routes/visualize.js";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "")
@@ -37,6 +38,7 @@ app.get("/health", (_req, res) => {
 
 app.post("/api/tutor", tutorRoute);
 app.post("/api/simulator", simulatorRoute);
+app.post("/api/visualize", visualizeRoute);
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error("[unhandled]", err);

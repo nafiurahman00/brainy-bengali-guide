@@ -82,6 +82,7 @@ CREATE TABLE public.sessions (
   subject_id UUID REFERENCES public.subjects(id) ON DELETE SET NULL,
   title TEXT NOT NULL DEFAULT 'New session',
   scratchpad JSONB NOT NULL DEFAULT '{"goal":null,"summary":"","turn":0}'::jsonb,
+  visualization JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

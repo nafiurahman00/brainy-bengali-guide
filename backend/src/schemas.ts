@@ -26,3 +26,10 @@ export const simulatorBodySchema = z.object({
   maxTurns: z.number().int().min(1).max(20).optional(),
 });
 export type SimulatorBody = z.infer<typeof simulatorBodySchema>;
+
+export const visualizeBodySchema = z.object({
+  sessionId: z.string().uuid(),
+  message: z.string().min(1, "message is required"),
+  language: z.enum(["en", "bn"]).optional(),
+});
+export type VisualizeBody = z.infer<typeof visualizeBodySchema>;

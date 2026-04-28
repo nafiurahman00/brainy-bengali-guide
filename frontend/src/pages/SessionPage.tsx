@@ -11,6 +11,9 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { ImageIcon, X, Loader2, Plus, Minus, ArrowLeft, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useVisualization } from "@/hooks/use-visualization";
+import { VisualizationPanel } from "@/components/VisualizationPanel";
 
 interface Subject { id: string; slug: string; name: string; name_bn: string | null; }
 
@@ -20,6 +23,7 @@ export default function SessionPage() {
   const { lang } = useLang();
   const T = t(lang);
   const { messages, loading, streaming, send, giveFeedback, adjustMastery } = useChat(id);
+  const viz = useVisualization(id);
   const [input, setInput] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -51,10 +55,14 @@ export default function SessionPage() {
   const handleSend = async () => {
     if (!input.trim() && !image) return;
     const text = input.trim() || (image ? "[image submitted]" : "");
+    const isFirstTurn = !loading && messages.length === 0;
     setInput("");
     const f = image;
     setImage(null);
     setImagePreview(null);
+    if (isFirstTurn && viz.state.status === "idle" && text) {
+      void viz.generate(text, lang);
+    }
     await send(text, f ?? undefined, lang);
   };
 
@@ -164,36 +172,49 @@ export default function SessionPage() {
           </div>
         </section>
 
-        <aside className="lg:col-span-4 border-t border-[hsl(var(--hairline))] lg:border-t-0 lg:border-l lg:border-[hsl(var(--hairline))] pt-6 lg:pt-0 lg:pl-6 overflow-y-auto h-full pr-2">
-          <p className="text-[11px] font-medium text-[hsl(var(--ink-muted))] tracking-wide mb-4 uppercase">Pipeline · Last Turn</p>
-          <PipelinePanel
-            last={messages.filter((m) => m.role === "assistant" && !m.pending).slice(-1)[0]}
-            T={T}
-            onAdjust={async (delta) => {
-              const last = messages.filter((m) => m.role === "assistant" && !m.pending).slice(-1)[0];
-              if (!last?.sub_skill_id) return;
-              await adjustMastery(last.sub_skill_id, delta);
-              toast.success(delta > 0 ? T.increase : T.decrease);
-            }}
-          />
+        <aside className="lg:col-span-4 border-t border-[hsl(var(--hairline))] lg:border-t-0 lg:border-l lg:border-[hsl(var(--hairline))] pt-6 lg:pt-0 lg:pl-6 overflow-y-auto h-full pr-2 min-h-0 flex flex-col">
+          <Tabs defaultValue="visualization" className="flex flex-col flex-1 min-h-0">
+            <TabsList className="self-start bg-[hsl(var(--muted))] h-8 mb-4">
+              <TabsTrigger value="visualization" className="text-[11px] h-6 px-2.5">Visualization</TabsTrigger>
+              <TabsTrigger value="pipeline" className="text-[11px] h-6 px-2.5">Pipeline</TabsTrigger>
+            </TabsList>
 
-          {audit && (
-            <div className="mt-8">
-              <p className="text-[11px] font-medium text-[hsl(var(--ink-muted))] tracking-wide mb-3 uppercase">Audit Results</p>
-              <h3 className="text-base font-semibold mb-3">{T.qualityResults}</h3>
-              <dl className="space-y-2 text-[13px]">
-                <Row k={T.etmTurns} v={String(audit.estimated_turns_to_mastery)} />
-                <Row k={T.answerLeaked} v={audit.answer_leaked ? T.yes : T.no} bold={audit.answer_leaked} />
-                <Row k={T.socraticAdherence} v={`${Math.round(audit.socratic_adherence * 100)}%`} />
-              </dl>
-              <div className="mt-3">
-                <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))] mb-1">{T.improvements}</p>
-                <p className="text-[13px] text-[hsl(var(--ink-muted))] whitespace-pre-wrap">
-                  {audit.recommended_improvements}
-                </p>
-              </div>
-            </div>
-          )}
+            <TabsContent value="visualization" className="flex-1 min-h-0 mt-0 outline-none">
+              <VisualizationPanel state={viz.state} onRetry={viz.retry} />
+            </TabsContent>
+
+            <TabsContent value="pipeline" className="flex-1 min-h-0 mt-0 outline-none">
+              <p className="text-[11px] font-medium text-[hsl(var(--ink-muted))] tracking-wide mb-4 uppercase">Pipeline · Last Turn</p>
+              <PipelinePanel
+                last={messages.filter((m) => m.role === "assistant" && !m.pending).slice(-1)[0]}
+                T={T}
+                onAdjust={async (delta) => {
+                  const last = messages.filter((m) => m.role === "assistant" && !m.pending).slice(-1)[0];
+                  if (!last?.sub_skill_id) return;
+                  await adjustMastery(last.sub_skill_id, delta);
+                  toast.success(delta > 0 ? T.increase : T.decrease);
+                }}
+              />
+
+              {audit && (
+                <div className="mt-8">
+                  <p className="text-[11px] font-medium text-[hsl(var(--ink-muted))] tracking-wide mb-3 uppercase">Audit Results</p>
+                  <h3 className="text-base font-semibold mb-3">{T.qualityResults}</h3>
+                  <dl className="space-y-2 text-[13px]">
+                    <Row k={T.etmTurns} v={String(audit.estimated_turns_to_mastery)} />
+                    <Row k={T.answerLeaked} v={audit.answer_leaked ? T.yes : T.no} bold={audit.answer_leaked} />
+                    <Row k={T.socraticAdherence} v={`${Math.round(audit.socratic_adherence * 100)}%`} />
+                  </dl>
+                  <div className="mt-3">
+                    <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))] mb-1">{T.improvements}</p>
+                    <p className="text-[13px] text-[hsl(var(--ink-muted))] whitespace-pre-wrap">
+                      {audit.recommended_improvements}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </aside>
       </main>
     </div>
