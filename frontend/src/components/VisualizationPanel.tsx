@@ -1,6 +1,7 @@
 import { Component, ReactNode, useMemo, useState } from "react";
 import { Loader2, RefreshCw, Code2, ChevronDown, ChevronRight, Sparkles, Wand2 } from "lucide-react";
 import type { VizState } from "@/hooks/use-visualization";
+import { sanitizeP5Code } from "@/lib/p5-sanitize";
 
 class VizErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -73,11 +74,87 @@ function buildSrcDoc(p5Code: string): string {
 </head>
 <body>
 <script>
-  window.addEventListener("error", (e) => {
+  window.addEventListener("error", function (e) {
+    var msg = (e && e.message) || "unknown";
     document.body.innerHTML =
-      '<pre class="p5-error">Sketch error: ' +
-      (e.message || "unknown") +
-      '</pre>';
+      '<pre class="p5-error">Sketch error: ' + msg + '</pre>';
+  });
+  // Defensive shims patch p5 globals after they are defined on window.
+  // Covers three classes of LLM-generated bugs: color helpers forwarding
+  // the Arguments object instead of spreading it; p5.Vector static helpers
+  // called with undefined operands (init-order bugs); and a throw inside
+  // draw() that would otherwise kill the iframe forever.
+  window.addEventListener("load", function () {
+    var COLOR_FNS = ["color", "fill", "stroke", "background", "tint"];
+    for (var i = 0; i < COLOR_FNS.length; i++) {
+      (function (name) {
+        var orig = window[name];
+        if (typeof orig !== "function") return;
+        window[name] = function () {
+          if (arguments.length === 1) {
+            var a = arguments[0];
+            var tag = Object.prototype.toString.call(a);
+            if (tag === "[object Arguments]") return orig.apply(this, Array.prototype.slice.call(a));
+            if (Array.isArray(a) && a.length >= 1 && a.length <= 4 && a.every(function (n) { return typeof n === "number"; })) {
+              return orig.apply(this, a);
+            }
+          }
+          return orig.apply(this, arguments);
+        };
+      })(COLOR_FNS[i]);
+    }
+
+    // p5.Vector static helpers — coerce undefined operands to a zero vector
+    // so an init-order bug degrades into a benign visual instead of a crash.
+    if (window.p5 && window.p5.Vector) {
+      var V = window.p5.Vector;
+      var zeroVec = function () {
+        try { return window.createVector ? window.createVector(0, 0, 0) : new V(0, 0, 0); }
+        catch (_) { return new V(0, 0, 0); }
+      };
+      var loggedVecWarn = false;
+      var VEC_FNS = ["add", "sub", "mult", "div", "copy", "dot", "cross", "lerp", "normalize", "rotate", "angleBetween"];
+      for (var j = 0; j < VEC_FNS.length; j++) {
+        (function (name) {
+          var orig = V[name];
+          if (typeof orig !== "function") return;
+          V[name] = function () {
+            var args = Array.prototype.slice.call(arguments);
+            var coerced = false;
+            for (var k = 0; k < args.length; k++) {
+              if (args[k] == null) { args[k] = zeroVec(); coerced = true; }
+            }
+            if (coerced && !loggedVecWarn) {
+              loggedVecWarn = true;
+              console.warn("p5.Vector." + name + " received undefined; coerced to zero vector (init-order bug?).");
+            }
+            return orig.apply(this, args);
+          };
+        })(VEC_FNS[j]);
+      }
+    }
+
+    // Wrap setup/draw so failures surface clearly and a single bad frame
+    // does not permanently kill the iframe.
+    var origSetup = window.setup;
+    if (typeof origSetup === "function") {
+      window.setup = function () {
+        try { return origSetup.apply(this, arguments); }
+        catch (e) { console.error("setup() threw:", e); throw e; }
+      };
+    }
+    var origDraw = window.draw;
+    if (typeof origDraw === "function") {
+      var drawErrCount = 0;
+      window.draw = function () {
+        try { return origDraw.apply(this, arguments); }
+        catch (e) {
+          drawErrCount++;
+          if (drawErrCount === 1) console.error("draw() threw:", e);
+          if (drawErrCount > 30 && typeof window.noLoop === "function") window.noLoop();
+        }
+      };
+    }
   });
 </script>
 <script>
@@ -122,9 +199,16 @@ function VisualizationPanelInner({
 }) {
   const [showCode, setShowCode] = useState(false);
 
-  const srcDoc = useMemo(() => {
-    if (state.status !== "ready") return "";
-    return buildSrcDoc(state.viz.p5_code);
+  const prepared = useMemo(() => {
+    if (state.status !== "ready") return null;
+    const result = sanitizeP5Code(state.viz.p5_code);
+    if (result.ok === false) {
+      return { kind: "error" as const, error: result.error };
+    }
+    if (result.warnings.length > 0) {
+      console.warn("p5 sanitizer fixed sketch:", result.warnings);
+    }
+    return { kind: "ok" as const, srcDoc: buildSrcDoc(result.code) };
   }, [state]);
 
   if (state.status === "idle") {
@@ -192,14 +276,33 @@ function VisualizationPanelInner({
       </div>
 
       <div className="rounded-xl border border-[hsl(var(--primary)/0.15)] overflow-hidden bg-white shadow-surface aspect-[4/3] w-full">
-        <iframe
-          key={typeof viz.p5_code === "string" ? viz.p5_code.slice(0, 64) : "viz"}
-          title={viz.title || "Visualization"}
-          srcDoc={srcDoc}
-          sandbox="allow-scripts"
-          className="block w-full h-full"
-          style={{ border: 0 }}
-        />
+        {prepared?.kind === "ok" ? (
+          <iframe
+            key={typeof viz.p5_code === "string" ? viz.p5_code.slice(0, 64) : "viz"}
+            title={viz.title || "Visualization"}
+            srcDoc={prepared.srcDoc}
+            sandbox="allow-scripts"
+            className="block w-full h-full"
+            style={{ border: 0 }}
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-start justify-center gap-2 p-4 bg-[hsl(var(--destructive))]/5">
+            <p className="text-[12px] font-medium text-[hsl(var(--destructive))]">
+              Sketch could not be rendered.
+            </p>
+            <p className="text-[11.5px] text-[hsl(var(--ink-muted))] break-words">
+              {prepared?.kind === "error" ? prepared.error : "Unknown error"}
+            </p>
+            {onRetry && (
+              <button
+                onClick={onRetry}
+                className="mt-1 inline-flex items-center gap-1.5 text-[11.5px] font-medium border border-[hsl(var(--primary)/0.2)] rounded-xl h-7 px-2.5 bg-[hsl(var(--paper))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+              >
+                <RefreshCw className="h-3 w-3" /> Retry
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {viz.interaction_hint && (

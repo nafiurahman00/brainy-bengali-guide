@@ -98,9 +98,9 @@ export default function SessionPage() {
               {subject ? (lang === "bn" && subject.name_bn ? subject.name_bn : subject.name) : "Session"}
             </div>
           </div>
-          <InkButton variant="outline" onClick={runAudit} disabled={auditing || messages.length < 2}>
+          {/* <InkButton variant="outline" onClick={runAudit} disabled={auditing || messages.length < 2}>
             {auditing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} <span className="ml-2">{T.runQualityCheck}</span>
-          </InkButton>
+          </InkButton> */}
         </div>
       </div>
 

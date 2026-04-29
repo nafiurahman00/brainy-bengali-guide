@@ -27,7 +27,7 @@ export const visualizeRoute = [
     if (!parse.success) {
       return res.status(400).json({ ok: false, error: parse.error.issues[0]?.message ?? "Bad request" });
     }
-    const { sessionId, message, language } = parse.data;
+    const { sessionId, message, language, regenerate } = parse.data;
     const userId = req.user!.id;
     const supabase = serviceClient();
 
@@ -41,7 +41,12 @@ export const visualizeRoute = [
       if (session.user_id !== userId) return res.status(403).json({ ok: false, error: "Forbidden" });
 
       const cached = session.visualization as Partial<Visualization> | null | undefined;
-      if (cached && typeof cached.p5_code === "string" && cached.p5_code.trim().length > 0) {
+      if (
+        !regenerate &&
+        cached &&
+        typeof cached.p5_code === "string" &&
+        cached.p5_code.trim().length > 0
+      ) {
         return res.json({
           ok: true,
           cached: true,
@@ -67,11 +72,13 @@ ABSOLUTE RULES — your output MUST satisfy all of these or the renderer will cr
 2. Inside setup() the FIRST line must be: \`createCanvas(560, 420);\`.
 3. NO external resources. No \`loadImage\`, no \`loadJSON\`, no \`fetch\`, no \`import\`, no \`require\`. Everything must be drawn from primitives.
 4. NO \`alert\`, \`prompt\`, \`confirm\`, \`window.location\`, \`document.cookie\`, or any attempts to escape the iframe. The sandbox blocks these but emitting them is wasted effort.
-5. The sketch must run forever without throwing. Guard against divide-by-zero, NaN, and infinite loops. Use deterministic math; avoid \`new Date()\` based logic except for \`millis()\`.
+5. The sketch must run forever without throwing. Guard against divide-by-zero, NaN, and infinite loops. Use deterministic math; avoid \`new Date()\` based logic except for \`millis()\`. Any value passed to \`fill\`, \`stroke\`, \`background\`, or \`tint\` must be finite numbers in [0, 255] or a valid CSS string — never an array of mixed types or an object.
 6. Prefer INTERACTIVITY: use \`mouseX\`, \`mouseY\`, \`mouseIsPressed\`, \`keyIsDown\`, or \`createSlider(...)\`. The student should be able to manipulate the visualization, not just watch it.
 7. Make it READABLE: white/light background, dark axes/text, one accent color (e.g. crimson #C0392B or teal #16A085) for the interactive element. Label axes and key quantities with \`text()\`.
 8. The visualization must illustrate the MECHANISM of the concept (e.g. show how a tangent slope changes as x moves; show vectors composing into a resultant). Do NOT give away a final numerical answer to the student's specific problem — keep it general.
 9. Keep the code under ~200 lines. No minification.
+10. NEVER pass the \`arguments\` object directly to \`color\`, \`fill\`, \`stroke\`, \`background\`, or \`tint\`. If you write a wrapper helper, spread it: \`fill(...arguments)\` (or use rest parameters). Passing \`arguments\` triggers \`[object Arguments] is not a valid color representation\` and crashes the sketch.
+11. INITIALIZATION ORDER: every \`let\` global you reference inside a helper function MUST be assigned a value BEFORE that helper is called. Either assign at the very top of \`setup()\` (immediately after \`createCanvas\`) before any other call, or initialize at module scope with a literal. In particular, do NOT call \`resetSketch()\` or any helper that reads vector globals before all \`let X = createVector(...)\` assignments have run. A helper using an unassigned global produces \`Cannot read properties of undefined\` from inside p5.Vector helpers and the canvas never renders.
 
 OUTPUT: call the propose_visualization tool with:
 - title: ≤ 60 chars, in ${lang}

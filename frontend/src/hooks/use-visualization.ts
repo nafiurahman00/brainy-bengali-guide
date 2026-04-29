@@ -62,7 +62,7 @@ export function useVisualization(sessionId: string | undefined) {
   }, [sessionId]);
 
   const generate = useCallback(
-    async (message: string, language: "en" | "bn" = "en") => {
+    async (message: string, language: "en" | "bn" = "en", regenerate = false) => {
       if (!sessionId) return;
       lastMsgRef.current = { message, language };
 
@@ -77,7 +77,7 @@ export function useVisualization(sessionId: string | undefined) {
         const resp = await fetch(VIZ_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ sessionId, message, language }),
+          body: JSON.stringify({ sessionId, message, language, regenerate }),
           signal: ctl.signal,
         });
         const json = await resp.json().catch(() => null);
@@ -103,7 +103,7 @@ export function useVisualization(sessionId: string | undefined) {
 
   const retry = useCallback(() => {
     const last = lastMsgRef.current;
-    if (last) generate(last.message, last.language);
+    if (last) generate(last.message, last.language, true);
   }, [generate]);
 
   return { state, generate, retry };

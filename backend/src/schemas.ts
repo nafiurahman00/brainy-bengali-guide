@@ -31,5 +31,6 @@ export const visualizeBodySchema = z.object({
   sessionId: z.string().uuid(),
   message: z.string().min(1, "message is required"),
   language: z.enum(["en", "bn"]).optional(),
+  regenerate: z.boolean().optional(),
 });
 export type VisualizeBody = z.infer<typeof visualizeBodySchema>;
