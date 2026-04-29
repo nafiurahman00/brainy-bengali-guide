@@ -34,3 +34,10 @@ export const visualizeBodySchema = z.object({
   regenerate: z.boolean().optional(),
 });
 export type VisualizeBody = z.infer<typeof visualizeBodySchema>;
+
+export const visualizeRepairBodySchema = z.object({
+  sessionId: z.string().uuid(),
+  code: z.string().min(1, "code is required").max(40000),
+  errorMessage: z.string().min(1, "errorMessage is required").max(2000),
+});
+export type VisualizeRepairBody = z.infer<typeof visualizeRepairBodySchema>;

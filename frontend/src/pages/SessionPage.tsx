@@ -180,7 +180,7 @@ export default function SessionPage() {
             </TabsList>
 
             <TabsContent value="visualization" className="flex-1 min-h-0 mt-0 outline-none">
-              <VisualizationPanel state={viz.state} onRetry={viz.retry} />
+              <VisualizationPanel sessionId={id} state={viz.state} onRetry={viz.retry} />
             </TabsContent>
 
             <TabsContent value="pipeline" className="flex-1 min-h-0 mt-0 outline-none">

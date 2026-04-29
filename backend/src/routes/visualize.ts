@@ -3,7 +3,7 @@ import { requireUser, type AuthedRequest } from "../middleware/auth.js";
 import { serviceClient } from "../lib/supabase.js";
 import { getAIClient, aiErrorStatus } from "../lib/ai.js";
 import { Type, FunctionCallingConfigMode } from "@google/genai";
-import { visualizeBodySchema } from "../schemas.js";
+import { visualizeBodySchema, visualizeRepairBodySchema } from "../schemas.js";
 
 export interface Visualization {
   title: string;
@@ -79,6 +79,10 @@ ABSOLUTE RULES — your output MUST satisfy all of these or the renderer will cr
 9. Keep the code under ~200 lines. No minification.
 10. NEVER pass the \`arguments\` object directly to \`color\`, \`fill\`, \`stroke\`, \`background\`, or \`tint\`. If you write a wrapper helper, spread it: \`fill(...arguments)\` (or use rest parameters). Passing \`arguments\` triggers \`[object Arguments] is not a valid color representation\` and crashes the sketch.
 11. INITIALIZATION ORDER: every \`let\` global you reference inside a helper function MUST be assigned a value BEFORE that helper is called. Either assign at the very top of \`setup()\` (immediately after \`createCanvas\`) before any other call, or initialize at module scope with a literal. In particular, do NOT call \`resetSketch()\` or any helper that reads vector globals before all \`let X = createVector(...)\` assignments have run. A helper using an unassigned global produces \`Cannot read properties of undefined\` from inside p5.Vector helpers and the canvas never renders.
+12. p5 CONSTANTS AND FUNCTIONS DO NOT EXIST AT MODULE TOP LEVEL. \`PI\`, \`TWO_PI\`, \`HALF_PI\`, \`QUARTER_PI\`, \`width\`, \`height\`, and functions like \`cos\`, \`sin\`, \`color\`, \`createVector\`, \`random\` are only defined AFTER setup() begins running. NEVER use them in a top-level \`let\` initializer. If you need an angle constant at top level, use \`Math.PI\`. If you need a vector at top level, declare \`let myVec;\` and assign \`myVec = createVector(...)\` inside setup(). Top-level use produces \`ReferenceError: PI is not defined\`.
+13. NO TEMPORAL DEAD ZONE BUGS. Do not reference any \`let\`/\`const\` inside its own initializer (e.g. \`let centerX = width / 2; let centerY = centerX + 10;\` is fine, but \`let centerX = centerY;\` before \`centerY\` is declared is not). If a global depends on \`width\`/\`height\`, assign it inside setup() AFTER \`createCanvas\`.
+14. CLASS DEFINITIONS go at MODULE TOP LEVEL (outside any function), not inside setup() or draw(). Instances created inside setup/draw can use them freely.
+15. EVENT HANDLERS (\`mousePressed\`, \`mouseReleased\`, \`keyPressed\`, etc.) must be top-level functions, not assigned to globals dynamically.
 
 OUTPUT: call the propose_visualization tool with:
 - title: ≤ 60 chars, in ${lang}
@@ -157,6 +161,122 @@ OUTPUT: call the propose_visualization tool with:
       return res.json({ ok: true, viz, cached: false });
     } catch (e) {
       console.error("visualize fatal", e);
+      return res.status(500).json({ ok: false, error: e instanceof Error ? e.message : "Unknown error" });
+    }
+  },
+];
+
+/**
+ * POST /api/visualize/repair
+ * Takes a known-broken p5 sketch and the runtime error it produced, asks
+ * Gemini for the smallest possible fix, and returns the corrected code. The
+ * fixed code is persisted back to `sessions.visualization` so subsequent loads
+ * skip the buggy version. Frontend calls this after a hidden-iframe preflight
+ * detects an error; capped at one repair per generation by the caller.
+ */
+export const repairVisualizationRoute = [
+  requireUser,
+  async (req: AuthedRequest, res: Response) => {
+    const parse = visualizeRepairBodySchema.safeParse(req.body);
+    if (!parse.success) {
+      return res.status(400).json({ ok: false, error: parse.error.issues[0]?.message ?? "Bad request" });
+    }
+    const { sessionId, code, errorMessage } = parse.data;
+    const userId = req.user!.id;
+    const supabase = serviceClient();
+
+    try {
+      const { data: session, error: sErr } = await supabase
+        .from("sessions")
+        .select("id, user_id, visualization")
+        .eq("id", sessionId)
+        .single();
+      if (sErr || !session) return res.status(404).json({ ok: false, error: "Session not found" });
+      if (session.user_id !== userId) return res.status(403).json({ ok: false, error: "Forbidden" });
+
+      const ai = getAIClient();
+
+      const systemInstruction = `You are a "p5.js Sketch Repair" assistant. You receive a p5.js sketch that crashed at runtime, plus the exact runtime error message. Your job is to return a CORRECTED version of the sketch with the SMALLEST POSSIBLE change that addresses the error while preserving the original visualization's intent and structure.
+
+ABSOLUTE RULES — your output MUST satisfy all of these or the renderer will crash again:
+1. p5.js GLOBAL MODE only. Top-level \`setup()\` and \`draw()\` functions. No \`new p5(...)\`, no modules, no IIFEs.
+2. Inside setup() the FIRST line must be: \`createCanvas(560, 420);\`.
+3. NO external resources: no \`loadImage\`, \`loadJSON\`, \`fetch\`, \`import\`, \`require\`.
+4. NO \`alert\`, \`prompt\`, \`confirm\`, \`window.location\`, \`document.cookie\`, \`eval\`.
+5. p5 constants like \`PI\`, \`TWO_PI\`, \`HALF_PI\`, and p5 functions like \`cos\`, \`sin\`, \`color\`, \`createVector\` ONLY exist after setup() starts running. NEVER reference them at module top level. If you need a constant at top level, use \`Math.PI\` etc. or initialize the variable inside setup().
+6. INITIALIZATION ORDER: any variable read by a helper function must be assigned before that helper is called. In setup(), assign all globals BEFORE calling any helper that reads them.
+7. NEVER pass the \`arguments\` object directly to color setters. Spread it: \`fill(...arguments)\`.
+8. Apply the smallest fix that resolves the reported error. Do NOT rewrite the sketch. Do NOT change the conceptual intent, the variable names, or the visual layout unless it is strictly necessary to fix the bug.
+
+OUTPUT: call the repair_sketch tool with a single field \`p5_code\` containing the full corrected sketch.`;
+
+      let toolArgs: any = null;
+      try {
+        const resp = await ai.models.generateContent({
+          model: "gemini-2.5-pro",
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `RUNTIME ERROR FROM THE BROWSER:\n"""\n${errorMessage}\n"""\n\nBROKEN SKETCH:\n\`\`\`js\n${code}\n\`\`\`\n\nReturn the corrected sketch via the repair_sketch tool. Apply the smallest fix that resolves the error.`,
+                },
+              ],
+            },
+          ],
+          config: {
+            systemInstruction,
+            tools: [
+              {
+                functionDeclarations: [
+                  {
+                    name: "repair_sketch",
+                    description: "Return a corrected p5.js sketch that fixes the reported runtime error.",
+                    parameters: {
+                      type: Type.OBJECT,
+                      properties: {
+                        p5_code: { type: Type.STRING },
+                      },
+                      required: ["p5_code"],
+                    },
+                  },
+                ],
+              },
+            ],
+            toolConfig: {
+              functionCallingConfig: {
+                mode: FunctionCallingConfigMode.ANY,
+                allowedFunctionNames: ["repair_sketch"],
+              },
+            },
+          },
+        });
+        toolArgs = resp.functionCalls?.[0]?.args ?? null;
+      } catch (err) {
+        console.error("visualize repair error", err);
+        const mapped = aiErrorStatus(err);
+        if (mapped) return res.status(mapped.status).json({ ok: false, error: mapped.message });
+        return res.status(500).json({ ok: false, error: "Repair failed" });
+      }
+
+      if (!toolArgs?.p5_code || typeof toolArgs.p5_code !== "string") {
+        return res.status(502).json({ ok: false, error: "Repair returned no sketch" });
+      }
+
+      const fixedCode = String(toolArgs.p5_code);
+      const cached = (session.visualization as Partial<Visualization> | null) ?? {};
+      const updated: Visualization = {
+        title: String(cached.title ?? "Visualization"),
+        explanation: String(cached.explanation ?? ""),
+        concept: String(cached.concept ?? "none"),
+        interaction_hint: String(cached.interaction_hint ?? ""),
+        p5_code: fixedCode,
+      };
+      await supabase.from("sessions").update({ visualization: updated }).eq("id", sessionId);
+
+      return res.json({ ok: true, p5_code: fixedCode });
+    } catch (e) {
+      console.error("visualize repair fatal", e);
       return res.status(500).json({ ok: false, error: e instanceof Error ? e.message : "Unknown error" });
     }
   },

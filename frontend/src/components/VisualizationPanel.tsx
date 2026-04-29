@@ -1,7 +1,7 @@
 import { Component, ReactNode, useMemo, useState } from "react";
-import { Loader2, RefreshCw, Code2, ChevronDown, ChevronRight, Sparkles, Wand2 } from "lucide-react";
+import { Loader2, RefreshCw, Code2, ChevronDown, ChevronRight, Sparkles, Wand2, Wrench } from "lucide-react";
 import type { VizState } from "@/hooks/use-visualization";
-import { sanitizeP5Code } from "@/lib/p5-sanitize";
+import { useP5Preflight } from "@/hooks/use-p5-preflight";
 
 class VizErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -29,7 +29,12 @@ const P5_CDN = "https://cdn.jsdelivr.net/npm/p5@1.11.2/lib/p5.min.js";
 // Wraps the LLM-generated p5 sketch in a self-contained HTML document. The
 // canvas is constrained by CSS so it never overflows the iframe — the sketch
 // can call createCanvas(560, 420) freely; we scale it to fit visually.
-function buildSrcDoc(p5Code: string): string {
+//
+// `nonce` is echoed in every postMessage to the parent so a hidden preflight
+// iframe and the visible iframe (or two preflights racing during repair) do
+// not see each other's events. Pass an empty string to disable messaging.
+export function buildSrcDoc(p5Code: string, nonce = ""): string {
+  const safeNonce = JSON.stringify(nonce);
   return `<!doctype html>
 <html>
 <head>
@@ -74,10 +79,20 @@ function buildSrcDoc(p5Code: string): string {
 </head>
 <body>
 <script>
+  var __VIZ_NONCE__ = ${safeNonce};
+  function __vizPost(type, message) {
+    if (!__VIZ_NONCE__) return;
+    try { parent.postMessage({ type: type, nonce: __VIZ_NONCE__, message: message ? String(message) : "" }, "*"); } catch (_) {}
+  }
   window.addEventListener("error", function (e) {
     var msg = (e && e.message) || "unknown";
+    __vizPost("viz-error", msg);
     document.body.innerHTML =
       '<pre class="p5-error">Sketch error: ' + msg + '</pre>';
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    var msg = (e && e.reason && (e.reason.message || e.reason)) || "unhandled rejection";
+    __vizPost("viz-error", String(msg));
   });
   // Defensive shims patch p5 globals after they are defined on window.
   // Covers three classes of LLM-generated bugs: color helpers forwarding
@@ -140,17 +155,31 @@ function buildSrcDoc(p5Code: string): string {
     if (typeof origSetup === "function") {
       window.setup = function () {
         try { return origSetup.apply(this, arguments); }
-        catch (e) { console.error("setup() threw:", e); throw e; }
+        catch (e) {
+          console.error("setup() threw:", e);
+          __vizPost("viz-error", "setup(): " + (e && e.message || e));
+          throw e;
+        }
       };
     }
     var origDraw = window.draw;
     if (typeof origDraw === "function") {
       var drawErrCount = 0;
+      var firstDrawDone = false;
       window.draw = function () {
-        try { return origDraw.apply(this, arguments); }
-        catch (e) {
+        try {
+          var r = origDraw.apply(this, arguments);
+          if (!firstDrawDone) {
+            firstDrawDone = true;
+            __vizPost("viz-ready", "");
+          }
+          return r;
+        } catch (e) {
           drawErrCount++;
-          if (drawErrCount === 1) console.error("draw() threw:", e);
+          if (drawErrCount === 1) {
+            console.error("draw() threw:", e);
+            __vizPost("viz-error", "draw(): " + (e && e.message || e));
+          }
           if (drawErrCount > 30 && typeof window.noLoop === "function") window.noLoop();
         }
       };
@@ -164,7 +193,11 @@ ${p5Code}
 </html>`;
 }
 
-export function VisualizationPanel(props: { state: VizState; onRetry?: () => void }) {
+export function VisualizationPanel(props: {
+  sessionId?: string;
+  state: VizState;
+  onRetry?: () => void;
+}) {
   return (
     <VizErrorBoundary>
       <VisualizationPanelInner {...props} />
@@ -191,25 +224,29 @@ function PanelHeader({ subtitle }: { subtitle?: string }) {
 }
 
 function VisualizationPanelInner({
+  sessionId,
   state,
   onRetry,
 }: {
+  sessionId?: string;
   state: VizState;
   onRetry?: () => void;
 }) {
   const [showCode, setShowCode] = useState(false);
+  const [attemptKey, setAttemptKey] = useState(0);
 
-  const prepared = useMemo(() => {
-    if (state.status !== "ready") return null;
-    const result = sanitizeP5Code(state.viz.p5_code);
-    if (result.ok === false) {
-      return { kind: "error" as const, error: result.error };
-    }
-    if (result.warnings.length > 0) {
-      console.warn("p5 sanitizer fixed sketch:", result.warnings);
-    }
-    return { kind: "ok" as const, srcDoc: buildSrcDoc(result.code) };
-  }, [state]);
+  const rawCode = state.status === "ready" ? state.viz.p5_code : null;
+  const preflight = useP5Preflight(sessionId, rawCode, attemptKey);
+
+  const visibleSrcDoc = useMemo(() => {
+    if (preflight.kind !== "ready") return null;
+    return buildSrcDoc(preflight.code);
+  }, [preflight]);
+
+  const handleRetry = () => {
+    setAttemptKey((n) => n + 1);
+    onRetry?.();
+  };
 
   if (state.status === "idle") {
     return (
@@ -275,32 +312,48 @@ function VisualizationPanelInner({
         )}
       </div>
 
-      <div className="rounded-xl border border-[hsl(var(--primary)/0.15)] overflow-hidden bg-white shadow-surface aspect-[4/3] w-full">
-        {prepared?.kind === "ok" ? (
-          <iframe
-            key={typeof viz.p5_code === "string" ? viz.p5_code.slice(0, 64) : "viz"}
-            title={viz.title || "Visualization"}
-            srcDoc={prepared.srcDoc}
-            sandbox="allow-scripts"
-            className="block w-full h-full"
-            style={{ border: 0 }}
-          />
+      <div className="rounded-xl border border-[hsl(var(--primary)/0.15)] overflow-hidden bg-white shadow-surface aspect-[4/3] w-full relative">
+        {preflight.kind === "ready" && visibleSrcDoc ? (
+          <>
+            <iframe
+              key={`${attemptKey}-${preflight.code.slice(0, 32)}`}
+              title={viz.title || "Visualization"}
+              srcDoc={visibleSrcDoc}
+              sandbox="allow-scripts"
+              className="block w-full h-full"
+              style={{ border: 0 }}
+            />
+            {preflight.repaired && (
+              <div className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.25)] px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--primary))]">
+                <Wrench className="h-2.5 w-2.5" /> auto-repaired
+              </div>
+            )}
+          </>
+        ) : preflight.kind === "checking" ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-[hsl(var(--primary)/0.03)]">
+            <Loader2 className="h-4 w-4 animate-spin text-[hsl(var(--primary))]" />
+            <p className="text-[11.5px] text-[hsl(var(--ink-muted))]">Verifying sketch…</p>
+          </div>
+        ) : preflight.kind === "repairing" ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-[hsl(var(--primary)/0.03)] px-4 text-center">
+            <Wrench className="h-4 w-4 text-[hsl(var(--primary))]" />
+            <p className="text-[11.5px] font-medium text-[hsl(var(--ink))]">Fixing the sketch…</p>
+            <p className="text-[10.5px] text-[hsl(var(--ink-faint))] break-words max-w-[80%]">{preflight.error}</p>
+          </div>
         ) : (
           <div className="w-full h-full flex flex-col items-start justify-center gap-2 p-4 bg-[hsl(var(--destructive))]/5">
             <p className="text-[12px] font-medium text-[hsl(var(--destructive))]">
               Sketch could not be rendered.
             </p>
             <p className="text-[11.5px] text-[hsl(var(--ink-muted))] break-words">
-              {prepared?.kind === "error" ? prepared.error : "Unknown error"}
+              {preflight.kind === "failed" ? preflight.error : "Unknown error"}
             </p>
-            {onRetry && (
-              <button
-                onClick={onRetry}
-                className="mt-1 inline-flex items-center gap-1.5 text-[11.5px] font-medium border border-[hsl(var(--primary)/0.2)] rounded-xl h-7 px-2.5 bg-[hsl(var(--paper))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
-              >
-                <RefreshCw className="h-3 w-3" /> Retry
-              </button>
-            )}
+            <button
+              onClick={handleRetry}
+              className="mt-1 inline-flex items-center gap-1.5 text-[11.5px] font-medium border border-[hsl(var(--primary)/0.2)] rounded-xl h-7 px-2.5 bg-[hsl(var(--paper))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+            >
+              <RefreshCw className="h-3 w-3" /> Retry
+            </button>
           </div>
         )}
       </div>
