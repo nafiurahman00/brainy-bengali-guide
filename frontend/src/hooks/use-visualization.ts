@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const VIZ_URL = `${import.meta.env.VITE_API_URL}/api/visualize`;
+const VIZ_URL = `${import.meta.env.VITE_API_URL || ""}/api/visualize`;
 
 export interface Visualization {
   title: string;

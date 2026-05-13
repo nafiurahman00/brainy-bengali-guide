@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildSrcDoc } from "@/components/VisualizationPanel";
 import { sanitizeP5Code } from "@/lib/p5-sanitize";
 
-const REPAIR_URL = `${import.meta.env.VITE_API_URL}/api/visualize/repair`;
+const REPAIR_URL = `${import.meta.env.VITE_API_URL || ""}/api/visualize/repair`;
 
 const PREFLIGHT_TIMEOUT_MS = 3000;
 const REPAIR_TIMEOUT_MS = 20000;

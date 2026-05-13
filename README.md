@@ -1,18 +1,14 @@
-# Socratic AI Tutor
+# Brainy Bengali Guide - Socratic AI Tutor
 
-A bilingual (English / Bangla) Socratic tutor for math and science. The
-tutor never reveals answers — it asks one focused, mastery-calibrated
-question per turn, defends against prompt injection, and tracks per-skill
-mastery using Bayesian Knowledge Tracing.
+A bilingual (English & Bangla) Socratic AI tutor for math and science, designed to facilitate learning without revealing answers directly. The tutor asks focused, mastery-calibrated questions, defends against prompt injection, and dynamically tracks per-skill mastery using Bayesian Knowledge Tracing. 
 
-> **v2 architecture** — decoupled into a static **frontend** (Vercel) and
-> a self-hosted **Node.js backend** (Render), backed by **your own**
-> Supabase project. The backend calls Gemini 2.5 Pro / Flash through the
-> Lovable AI Gateway.
+Additionally, the project features live, interactive **p5.js visual explanations** generated securely on the fly.
+
+> **Architecture Overview**: The project is decoupled into a static **frontend** (Vercel) and a self-hosted **Node.js backend** (Render). It is backed by **your own Supabase project** for database, storage, and authentication. The backend calls the Gemini API directly via the Google Gen AI SDK.
 
 ---
 
-## Architecture
+## 🏗 Architecture
 
 ```text
                 ┌──────────────────────────────────┐
@@ -28,187 +24,117 @@ mastery using Bayesian Knowledge Tracing.
 ┌───────────────────┴─────────┐    ┌───────────┴──────────────────┐
 │  frontend/  (Vercel)        │    │  backend/  (Render)          │
 │  React + Vite + Tailwind    │    │  Express + TypeScript        │
-│  supabase-js                │    │  POST /api/tutor    (SSE)    │
+│  p5.js + shadcn/ui          │    │  POST /api/tutor    (SSE)    │
 │                             │───▶│  POST /api/simulator         │
 │  Authorization: Bearer JWT  │    │  GET  /health                │
 └─────────────────────────────┘    │  Verifies Supabase JWT       │
-                                   │  Calls Lovable AI Gateway    │
-                                   │   (Gemini 2.5 Pro / Flash)   │
+                                   │  Calls Gemini API directly   │
                                    └──────────────────────────────┘
 ```
 
-- **Auth flow** — The browser logs in with `supabase.auth` and gets a
-  JWT. The JWT is sent as `Authorization: Bearer …` on every backend
-  call. The backend verifies it with `supabase.auth.getUser(jwt)` and
-  attaches `req.user.id`.
-- **Guest mode** — `POST /api/tutor` accepts `{ guest: true }` with no
-  JWT. The client passes `scratchpad` + `fluency` in the body; the
-  server is stateless and writes nothing to the database.
-- **AI calls** stay on the backend so the `LOVABLE_API_KEY` never
-  reaches the browser.
+- **Authentication Flow**: The browser authenticates via Supabase (`signInWithPassword` or OAuth) and receives a JWT. The JWT is sent via `Authorization: Bearer <JWT>` to the backend. The backend strictly verifies the JWT on each request.
+- **Guest Mode**: Supports guest sessions via `POST /api/tutor` with `{ guest: true }`. Guest state is fully stateless on the server side.
+- **Security**: The `GEMINI_API_KEY` stays exclusively on the backend, ensuring it never reaches the browser. Visualizations powered by `p5.js` are tightly sandboxed within isolated iframe components to prevent XSS.
 
 ---
 
-## Repo layout
+## 📂 Repository Structure
 
 ```
 .
-├── README.md              ← this file
-├── frontend/              ← Vercel deploy root (React + Vite SPA)
-├── backend/               ← Render deploy root (Express + TS server)
-└── supabase-export/       ← SQL to recreate the database in your own Supabase
+├── frontend/              ← React 18, Vite 5 SPA (Vercel Deploy Root)
+├── backend/               ← Express + TS server (Render Deploy Root)
+└── supabase-export/       ← SQL schema, seed data, and storage setup for Supabase
 ```
-
-`supabase/` (the original Lovable Cloud edge functions and migrations) is
-kept as historical reference. The new source of truth is
-`supabase-export/`.
 
 ---
 
-## Tech stack
+## 🛠 Tech Stack
 
 | Layer        | Choice |
 |--------------|--------|
-| Frontend     | React 18, Vite 5, TypeScript 5, Tailwind v3, shadcn/ui, react-router 6, `@supabase/supabase-js`, KaTeX + react-markdown |
-| Backend      | Node 20, Express 4, TypeScript 5, Zod, `@supabase/supabase-js` (service role + anon JWT verify) |
-| Database     | Supabase Postgres + Row-Level Security + Storage |
-| AI           | Gemini 2.5 Pro (planner, tool-call) + Gemini 2.5 Flash (streaming response), via Lovable AI Gateway |
-| Deploy       | Vercel (frontend) + Render (backend) |
+| **Frontend** | React 18, Vite 5, TypeScript, Tailwind v3, shadcn/ui, react-router 6, `@supabase/supabase-js`, p5.js, KaTeX + react-markdown |
+| **Backend**  | Node 20, Express 4, TypeScript, Zod, `@supabase/supabase-js`, Google Gen AI SDK |
+| **Database** | Supabase Postgres + Row-Level Security (RLS) + Storage |
+| **AI**       | Google Gemini Models (Direct API via `@google/genai`) |
+| **Deploy**   | Vercel (frontend) + Render (backend) |
 
 ---
 
-## Local dev — quickstart
+## 🚀 Local Development setup
 
+### 1. Database (Supabase)
+Create a Supabase project at [supabase.com](https://supabase.com/dashboard). In the SQL editor, run the following scripts in order:
+1. `supabase-export/schema.sql`
+2. `supabase-export/seed.sql`
+3. `supabase-export/storage.sql`
+
+*(See `supabase-export/README.md` for more details)*
+
+### 2. Backend
 ```bash
-# 1. Database — create a Supabase project (https://supabase.com/dashboard),
-#    then in its SQL editor run:
-#      supabase-export/schema.sql
-#      supabase-export/seed.sql
-#      supabase-export/storage.sql
-#    (See supabase-export/README.md for screenshots-style instructions.)
-
-# 2. Backend
 cd backend
-cp .env.example .env       # fill SUPABASE_*, LOVABLE_API_KEY, ALLOWED_ORIGINS
-npm install
-npm run dev                # → http://localhost:8787
+# Create a .env file and fill in:
+# SUPABASE_URL=...
+# SUPABASE_ANON_KEY=...
+# SUPABASE_SERVICE_ROLE_KEY=...
+# GEMINI_API_KEY=...
+# ALLOWED_ORIGINS=http://localhost:5173
+# PORT=8787
 
-# 3. Frontend (in a second terminal)
-cd frontend
-cp .env.example .env       # fill VITE_SUPABASE_*, VITE_API_URL=http://localhost:8787
 npm install
-npm run dev                # → http://localhost:5173
+npm run dev                # Starts server on http://localhost:8787
 ```
 
-Smoke test the backend:
-
+### 3. Frontend (In a new terminal)
 ```bash
-curl http://localhost:8787/health
-# → {"ok":true,"service":"socratic-tutor-backend"}
+cd frontend
+# Create a .env file and fill in:
+# VITE_SUPABASE_URL=...
+# VITE_SUPABASE_PUBLISHABLE_KEY=...
+# VITE_API_URL=http://localhost:8787
+
+npm install
+npm run dev                # Starts UI on http://localhost:5173
 ```
 
 ---
 
-## Deploy — Frontend → Vercel
+## 🌩 Deployment
 
-1. <https://vercel.com> → **Add New → Project** → import the repo.
-2. **Root Directory:** `frontend`
-3. **Framework preset:** Vite (auto-detected). Build `npm run build`,
-   output `dist`.
-4. **Environment variables:**
+### Frontend (Vercel)
+1. Add a new project on Vercel and import the repository.
+2. Set **Root Directory** to `frontend`.
+3. Vercel auto-detects **Vite**. Output directory is `dist`.
+4. Configure environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_API_URL`).
+5. Ensure the resulting Vercel domain is added to your Supabase Auth **Redirect URLs**, as well as the Backend's `ALLOWED_ORIGINS`.
 
-   | Name                            | Value                                          |
-   |---------------------------------|------------------------------------------------|
-   | `VITE_SUPABASE_URL`             | `https://<your-ref>.supabase.co`               |
-   | `VITE_SUPABASE_PUBLISHABLE_KEY` | your Supabase **anon** key                     |
-   | `VITE_API_URL`                  | `https://<your-backend>.onrender.com`          |
+### Backend (Render)
+A `render.yaml` blueprint is provided in `backend/`.
+1. Go to Render Dashboard -> **New** -> **Blueprint**.
+2. Connect your repository. Render will automatically detect the Web Service.
+3. Fill in the required environment variables (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `ALLOWED_ORIGINS`).
 
-5. Deploy. The included `frontend/vercel.json` rewrites all paths to
-   `index.html` so React Router deep links survive a refresh.
-6. After deploy, add the Vercel domain to:
-   - The backend's `ALLOWED_ORIGINS`
-   - Supabase **Auth → URL Configuration → Redirect URLs**
-
-## Deploy — Backend → Render
-
-Easiest path uses the included `backend/render.yaml` blueprint:
-
-1. <https://dashboard.render.com> → **New → Blueprint** → connect repo.
-2. Render reads `backend/render.yaml` and creates a Web Service. Fill in
-   the five secrets when prompted.
-
-Or set up manually:
-
-| Setting                | Value                            |
-|------------------------|----------------------------------|
-| Type                   | Web Service                      |
-| Environment            | Node                             |
-| Root Directory         | `backend`                        |
-| Build Command          | `npm install && npm run build`   |
-| Start Command          | `npm start`                      |
-| Health Check Path      | `/health`                        |
-| Environment variables  | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `LOVABLE_API_KEY`, `ALLOWED_ORIGINS=https://<your-vercel-domain>` |
-
-A Dockerfile is also provided for container-based deploys.
+*(A `Dockerfile` is also provided for containerized deployments.)*
 
 ---
 
-## Auth flow in detail
+## 💡 Core Features
 
-```text
-browser                 supabase.co                 backend
-  │                         │                         │
-  │  signInWithPassword ───▶│                         │
-  │◀───────  JWT  ──────────│                         │
-  │                         │                         │
-  │  POST /api/tutor                                  │
-  │   Authorization: Bearer <JWT> ───────────────────▶│
-  │                         │                         │
-  │                         │◀──── auth.getUser(jwt) ─│
-  │                         │────────  user  ────────▶│
-  │                         │                         │
-  │◀────  text/event-stream  ────────────────────────│
-```
+### Socratic Planning & Evaluation
+The application utilizes an intelligent "Planner" process. The backend safely passes contextual scratchpad memory to the LLM to form a plan of action before responding, maintaining a high-fidelity learning experience.
 
-- The JWT is issued by Supabase Auth (email/password, optionally Google).
-- The backend never stores the JWT — it only verifies it on each request.
-- For DB writes, the backend uses the **service-role** key (which
-  bypasses RLS) and always scopes writes to `req.user.id` manually.
+### Secure Visualizations (p5.js)
+The tutor can generate graphical explanations dynamically. The `frontend` securely processes generated p5.js code through strict initialization and run-loop sandboxing shims ensuring malicious or broken LLM-generated code will not crash the browser application.
+
+### Efficiency-to-Mastery Simulator
+`POST /api/simulator` serves as an integration to run quality audits. A Gemini judge evaluates a Socratic transcript segment and issues performance scores such as `socratic_adherence` and `frustration_handled`.
 
 ---
 
-## Caveats
-
-- **Lovable preview will not run the Node server.** Use the deployed
-  Render backend, or run `backend/` locally and point `VITE_API_URL` at
-  `http://localhost:8787`.
-- `frontend/src/integrations/supabase/client.ts` and `types.ts` were
-  originally Lovable Cloud auto-generated. After switching to your own
-  Supabase, regenerate the types:
-
+## ⚠️ Caveats & Notes
+- After configuring a new Supabase project, you may need to regenerate the TypeScript types using the Supabase CLI to reflect your precise schema:
   ```bash
-  npx supabase gen types typescript \
-    --project-id <your-project-ref> \
-    > frontend/src/integrations/supabase/types.ts
+  npx supabase gen types typescript --project-id <your-project-ref> > frontend/src/integrations/supabase/types.ts
   ```
-- The `LOVABLE_API_KEY` works from any Node host — no Lovable Cloud
-  dependency at runtime.
-- Existing Lovable Cloud Supabase data is **not** auto-migrated. If you
-  want to preserve rows, use `pg_dump --data-only` (see
-  `supabase-export/README.md`).
-
----
-
-## Folder reference
-
-| Path                       | Purpose                                                  |
-|----------------------------|----------------------------------------------------------|
-| `frontend/src/pages/`      | Auth, Dashboard, SessionPage, GuestSession, Knowledge    |
-| `frontend/src/hooks/use-chat.ts` | Calls `${VITE_API_URL}/api/tutor` (SSE)            |
-| `frontend/src/integrations/supabase/` | Auto-generated client + types               |
-| `backend/src/routes/tutor.ts`     | Sanitize+Plan (Pro) → SSE stream (Flash)          |
-| `backend/src/routes/simulator.ts` | EtM scoring (port of student-simulator)            |
-| `backend/src/middleware/auth.ts`  | `requireUser` / `optionalUser` JWT verify          |
-| `supabase-export/schema.sql`      | Tables, RLS, triggers, `handle_new_user`           |
-| `supabase-export/seed.sql`        | Subjects → concepts → sub_skills (EN + BN)          |
-| `supabase-export/storage.sql`     | `problem-images` bucket + per-user RLS              |
+- Make sure to restart the `frontend` server if changing environment variables.

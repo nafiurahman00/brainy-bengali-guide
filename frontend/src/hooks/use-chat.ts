@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const FN_URL = `${import.meta.env.VITE_API_URL}/api/tutor`;
+const FN_URL = `${import.meta.env.VITE_API_URL || ""}/api/tutor`;
 
 export interface UIMessage {
   id: string;
