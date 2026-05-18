@@ -202,8 +202,7 @@ Tasks (call the analyze tool):
       let planResult: any;
       try {
         const planResp = await ai.models.generateContent({
-          // model: "gemini-2.5-pro",
-          model: "gemini-3-flash-preview",
+          model: body.imageUrl ? "gemini-2.5-pro" : "gemini-3-flash-preview",
           contents: [...history, { role: "user", parts: planParts }],
           config: {
             systemInstruction:

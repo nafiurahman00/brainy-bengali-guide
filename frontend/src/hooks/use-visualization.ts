@@ -32,7 +32,7 @@ function normalizeViz(raw: any): Visualization | null {
 export function useVisualization(sessionId: string | undefined) {
   const [state, setState] = useState<VizState>({ status: "idle" });
   const abortRef = useRef<AbortController | null>(null);
-  const lastMsgRef = useRef<{ message: string; language: "en" | "bn" } | null>(null);
+  const lastMsgRef = useRef<{ message: string; language: "en" | "bn"; imageUrl?: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,9 +62,9 @@ export function useVisualization(sessionId: string | undefined) {
   }, [sessionId]);
 
   const generate = useCallback(
-    async (message: string, language: "en" | "bn" = "en", regenerate = false) => {
+    async (message: string, language: "en" | "bn" = "en", imageUrl?: string, regenerate = false) => {
       if (!sessionId) return;
-      lastMsgRef.current = { message, language };
+      lastMsgRef.current = { message, language, imageUrl };
 
       abortRef.current?.abort();
       const ctl = new AbortController();
@@ -77,7 +77,7 @@ export function useVisualization(sessionId: string | undefined) {
         const resp = await fetch(VIZ_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ sessionId, message, language, regenerate }),
+          body: JSON.stringify({ sessionId, message, language, imageUrl, regenerate }),
           signal: ctl.signal,
         });
         const json = await resp.json().catch(() => null);
@@ -103,7 +103,7 @@ export function useVisualization(sessionId: string | undefined) {
 
   const retry = useCallback(() => {
     const last = lastMsgRef.current;
-    if (last) generate(last.message, last.language, true);
+    if (last) generate(last.message, last.language, last.imageUrl, true);
   }, [generate]);
 
   return { state, generate, retry };

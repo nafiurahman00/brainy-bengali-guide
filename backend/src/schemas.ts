@@ -30,6 +30,7 @@ export type SimulatorBody = z.infer<typeof simulatorBodySchema>;
 export const visualizeBodySchema = z.object({
   sessionId: z.string().uuid(),
   message: z.string().min(1, "message is required"),
+  imageUrl: z.string().optional(),
   language: z.enum(["en", "bn"]).optional(),
   regenerate: z.boolean().optional(),
 });

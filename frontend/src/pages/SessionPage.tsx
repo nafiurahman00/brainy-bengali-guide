@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
 import { InkButton } from "@/components/InkButton";
-import { useChat, UIMessage } from "@/hooks/use-chat";
+import { useChat, UIMessage, uploadProblemImage } from "@/hooks/use-chat";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/i18n";
 import ReactMarkdown from "react-markdown";
@@ -60,10 +60,17 @@ export default function SessionPage() {
     const f = image;
     setImage(null);
     setImagePreview(null);
-    if (isFirstTurn && viz.state.status === "idle" && text) {
-      void viz.generate(text, lang);
+
+    let imageUrl: string | undefined;
+    if (f && id) {
+      const { data: u } = await supabase.auth.getUser();
+      if (u.user) imageUrl = await uploadProblemImage(u.user.id, id, f);
     }
-    await send(text, f ?? undefined, lang);
+
+    if (isFirstTurn && viz.state.status === "idle" && (text || imageUrl)) {
+      void viz.generate(text, lang, imageUrl);
+    }
+    await send(text, imageUrl, lang);
   };
 
   const runAudit = async () => {

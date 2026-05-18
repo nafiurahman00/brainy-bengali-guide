@@ -18,6 +18,18 @@ export interface UIMessage {
   pending?: boolean;
 }
 
+export async function uploadProblemImage(
+  userId: string,
+  sessionId: string,
+  file: File
+): Promise<string | undefined> {
+  const path = `${userId}/${sessionId}/${Date.now()}-${file.name}`;
+  const { error: upErr } = await supabase.storage.from("problem-images").upload(path, file);
+  if (upErr) return undefined;
+  const { data: signed } = await supabase.storage.from("problem-images").createSignedUrl(path, 3600);
+  return signed?.signedUrl;
+}
+
 export function useChat(sessionId: string | undefined) {
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,21 +62,10 @@ export function useChat(sessionId: string | undefined) {
   useEffect(() => { refresh(); }, [refresh]);
 
   const send = useCallback(
-    async (text: string, imageFile?: File, language: "en" | "bn" = "en") => {
+    async (text: string, imageUrl?: string, language: "en" | "bn" = "en") => {
       if (!sessionId) return;
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
-
-      // optional image upload
-      let imageUrl: string | undefined;
-      if (imageFile) {
-        const path = `${u.user.id}/${sessionId}/${Date.now()}-${imageFile.name}`;
-        const { error: upErr } = await supabase.storage.from("problem-images").upload(path, imageFile);
-        if (!upErr) {
-          const { data: signed } = await supabase.storage.from("problem-images").createSignedUrl(path, 3600);
-          imageUrl = signed?.signedUrl;
-        }
-      }
 
       // optimistic user message
       const tempUser: UIMessage = {

@@ -27,7 +27,7 @@ export const visualizeRoute = [
     if (!parse.success) {
       return res.status(400).json({ ok: false, error: parse.error.issues[0]?.message ?? "Bad request" });
     }
-    const { sessionId, message, language, regenerate } = parse.data;
+    const { sessionId, message, imageUrl, language, regenerate } = parse.data;
     const userId = req.user!.id;
     const supabase = serviceClient();
 
@@ -91,6 +91,35 @@ OUTPUT: call the propose_visualization tool with:
 - p5_code: the full sketch source as a single string. Must be ready to paste into <script>...</script>.
 - interaction_hint: one sentence in ${lang} telling the student how to interact (e.g. "Drag the red dot to slide x along the curve.").`;
 
+      const userParts: any[] = [
+        {
+          text:
+            `STUDENT'S FIRST QUESTION (subject: ${subjectName}):\n"""${message}"""\n\n` +
+            (imageUrl
+              ? `The student also attached the image below — it contains the actual problem. ` +
+                `OCR/read the image to determine the real subject of the visualization; ` +
+                `if it disagrees with the text, trust the image.\n\n`
+              : "") +
+            `Produce a p5.js visualization that helps the student build intuition for the underlying concept. ` +
+            `Call the propose_visualization tool.`,
+        },
+      ];
+
+      if (imageUrl) {
+        try {
+          const imgResp = await fetch(imageUrl);
+          if (imgResp.ok) {
+            const imgBuf = await imgResp.arrayBuffer();
+            const mimeType = imgResp.headers.get("content-type") ?? "image/jpeg";
+            userParts.push({
+              inlineData: { mimeType, data: Buffer.from(imgBuf).toString("base64") },
+            });
+          }
+        } catch {
+          // text-only generation is still a useful fallback
+        }
+      }
+
       let toolArgs: any = null;
       try {
         const resp = await ai.models.generateContent({
@@ -98,11 +127,7 @@ OUTPUT: call the propose_visualization tool with:
           contents: [
             {
               role: "user",
-              parts: [
-                {
-                  text: `STUDENT'S FIRST QUESTION (subject: ${subjectName}):\n"""${message}"""\n\nProduce a p5.js visualization that helps the student build intuition for the underlying concept. Call the propose_visualization tool.`,
-                },
-              ],
+              parts: userParts,
             },
           ],
           config: {
