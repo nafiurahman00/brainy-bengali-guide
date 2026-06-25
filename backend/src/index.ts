@@ -4,6 +4,7 @@ import cors from "cors";
 import { tutorRoute } from "./routes/tutor.js";
 import { simulatorRoute } from "./routes/simulator.js";
 import { visualizeRoute, repairVisualizationRoute } from "./routes/visualize.js";
+import { feedbackRoute } from "./routes/feedback.js";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "")
@@ -37,6 +38,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.post("/api/tutor", tutorRoute);
+app.post("/api/feedback", feedbackRoute);
 app.post("/api/simulator", simulatorRoute);
 app.post("/api/visualize", visualizeRoute);
 app.post("/api/visualize/repair", repairVisualizationRoute);

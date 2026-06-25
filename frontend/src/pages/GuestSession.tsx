@@ -161,9 +161,22 @@ export default function GuestSession() {
                       : m
                 )
               );
-              // ensure fluency entry exists for this skill
+              // Sync fluency from the server's per-turn assessment (the algorithm
+              // lives server-side even for guests). Falls back to ensuring an entry.
               const slug = p.meta.sub_skill_slug;
-              if (slug) {
+              const ku = p.meta.knowledge_update;
+              if (slug && ku) {
+                setFluency((prev) => ({
+                  ...prev,
+                  [slug]: {
+                    mastery: Number(ku.mastery ?? prev[slug]?.mastery ?? 0.3),
+                    attempts: Number(ku.attempts ?? prev[slug]?.attempts ?? 0),
+                    correct: Number(ku.correct ?? prev[slug]?.correct ?? 0),
+                    error_tags: ku.error_tags ?? prev[slug]?.error_tags ?? [],
+                    name: ku.sub_skill_name ?? p.meta.sub_skill_name ?? prev[slug]?.name,
+                  },
+                }));
+              } else if (slug) {
                 setFluency((prev) =>
                   prev[slug]
                     ? prev
@@ -214,17 +227,18 @@ export default function GuestSession() {
         const post = (pM * pSlip) / (pM * pSlip + (1 - pM) * (1 - pGuess));
         pM = post + (1 - post) * pLearn;
       }
+      // Secondary signal: the server already auto-assessed this turn, so the
+      // manual tap only nudges mastery a fraction of the way.
+      const blended = cur.mastery + 0.4 * (Math.min(Math.max(pM, 0), 1) - cur.mastery);
       const newTags = new Set(cur.error_tags);
-      if (!isCorrect && msg.diagnosed_error) newTags.add(msg.diagnosed_error.slice(0, 40));
+      if (!isCorrect && msg.diagnosed_error) newTags.add(msg.diagnosed_error.slice(0, 80));
       return {
         ...prev,
         [slug]: {
           ...cur,
-          mastery: Math.min(Math.max(pM, 0), 1),
-          attempts: cur.attempts + 1,
-          correct: cur.correct + (isCorrect ? 1 : 0),
-          error_tags: Array.from(newTags),
+          mastery: Math.min(Math.max(blended, 0), 1),
           name: msg.sub_skill_name ?? cur.name,
+          error_tags: Array.from(newTags),
         },
       };
     });
@@ -296,7 +310,7 @@ export default function GuestSession() {
                 <p className="text-[12px] font-medium text-[hsl(var(--primary))] mb-2">Guest mode</p>
                 <p className="text-[15px] text-[hsl(var(--ink-muted))] max-w-sm leading-relaxed">
                   Type a problem below — or attach a screenshot.<br />
-                  <span className="text-[hsl(var(--ink-faint))] text-[13px]">Your tutor will respond with a question, never the answer.</span>
+                  <span className="text-[hsl(var(--ink-faint))] text-[13px]">Your tutor guides you with questions — and steps in with more help whenever you're stuck.</span>
                 </p>
               </div>
             )}

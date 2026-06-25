@@ -2,16 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
-import { InkButton } from "@/components/InkButton";
 import { useChat, UIMessage, uploadProblemImage } from "@/hooks/use-chat";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/i18n";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import { ImageIcon, X, Loader2, Plus, Minus, ArrowLeft, Send, Sparkles } from "lucide-react";
+import { ImageIcon, X, ArrowLeft, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useVisualization } from "@/hooks/use-visualization";
 import { VisualizationPanel } from "@/components/VisualizationPanel";
 
@@ -22,14 +20,12 @@ export default function SessionPage() {
   const nav = useNavigate();
   const { lang } = useLang();
   const T = t(lang);
-  const { messages, loading, streaming, send, giveFeedback, adjustMastery } = useChat(id);
+  const { messages, loading, streaming, send, giveFeedback } = useChat(id);
   const viz = useVisualization(id);
   const [input, setInput] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
-  const [auditing, setAuditing] = useState(false);
-  const [audit, setAudit] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,28 +63,28 @@ export default function SessionPage() {
       if (u.user) imageUrl = await uploadProblemImage(u.user.id, id, f);
     }
 
-    if (isFirstTurn && viz.state.status === "idle" && (text || imageUrl)) {
-      void viz.generate(text, lang, imageUrl);
-    }
+    void isFirstTurn; // viz is now driven by the focus effect below (context-aware)
     await send(text, imageUrl, lang);
   };
 
-  const runAudit = async () => {
-    if (!id) return;
-    setAuditing(true);
-    setAudit(null);
-    try {
-      const { data: sess } = await supabase.auth.getSession();
-      const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/student-simulator`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sess.session?.access_token}` },
-        body: JSON.stringify({ sessionId: id }),
-      });
-      const j = await r.json();
-      if (!r.ok) { toast.error(j.error || "Audit failed"); return; }
-      setAudit(j.result);
-    } finally { setAuditing(false); }
-  };
+  // Drive the visualization from the conversation's current focus: when the
+  // tutor's target sub-skill changes, generate a fresh, context-aware sketch
+  // (the backend caches per focus, so revisiting a focus is instant).
+  const lastAssistantMeta = [...messages].reverse().find((m) => m.role === "assistant");
+  const lastUserContent = [...messages].reverse().find((m) => m.role === "user")?.content;
+  const vizFocus = lastAssistantMeta?.sub_skill_slug;
+  useEffect(() => {
+    if (!id || !vizFocus) return;
+    viz.ensureFor(vizFocus, lastUserContent ?? "", lang, {
+      subSkillSlug: lastAssistantMeta?.sub_skill_slug,
+      subSkillName: lastAssistantMeta?.sub_skill_name,
+      diagnosedError: lastAssistantMeta?.diagnosed_error,
+      difficulty: lastAssistantMeta?.difficulty,
+      subgoal: lastAssistantMeta?.subgoal,
+      cleanedProblem: lastUserContent,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vizFocus, id, lang]);
 
   const lastAssistantId = [...messages].reverse().find((m) => m.role === "assistant" && !m.pending)?.id;
 
@@ -96,7 +92,7 @@ export default function SessionPage() {
     <div className="h-[100dvh] w-full overflow-hidden flex flex-col">
       <AppHeader />
       <div className="shrink-0 border-b border-[hsl(var(--hairline))] bg-[hsl(var(--paper))]">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <button onClick={() => nav("/")} className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] transition-colors">
               <ArrowLeft className="h-3.5 w-3.5" /> {T.dashboard}
@@ -105,14 +101,11 @@ export default function SessionPage() {
               {subject ? (lang === "bn" && subject.name_bn ? subject.name_bn : subject.name) : "Session"}
             </div>
           </div>
-          {/* <InkButton variant="outline" onClick={runAudit} disabled={auditing || messages.length < 2}>
-            {auditing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />} <span className="ml-2">{T.runQualityCheck}</span>
-          </InkButton> */}
         </div>
       </div>
 
-      <main className="flex-1 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
-        <section className="lg:col-span-8 flex flex-col min-h-0 h-full">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
+        <section className="lg:col-span-7 flex flex-col min-h-0 h-full">
           <div ref={scrollRef} className="flex-1 overflow-y-auto pr-2 space-y-6">
             {loading && <div className="text-[12px] font-medium text-[hsl(var(--ink-muted))]">loading…</div>}
             {!loading && messages.length === 0 && (
@@ -123,7 +116,7 @@ export default function SessionPage() {
                 <p className="text-[12px] font-medium text-[hsl(var(--primary))] mb-2">First turn</p>
                 <p className="text-[15px] text-[hsl(var(--ink-muted))] max-w-sm leading-relaxed">
                   Type a problem below — or attach a screenshot.<br />
-                  <span className="text-[hsl(var(--ink-faint))] text-[13px]">Your tutor will respond with a question, never the answer.</span>
+                  <span className="text-[hsl(var(--ink-faint))] text-[13px]">Your tutor guides you with questions — and steps in with more help whenever you're stuck.</span>
                 </p>
               </div>
             )}
@@ -179,49 +172,8 @@ export default function SessionPage() {
           </div>
         </section>
 
-        <aside className="lg:col-span-4 border-t border-[hsl(var(--hairline))] lg:border-t-0 lg:border-l lg:border-[hsl(var(--hairline))] pt-6 lg:pt-0 lg:pl-6 overflow-y-auto h-full pr-2 min-h-0 flex flex-col">
-          <Tabs defaultValue="visualization" className="flex flex-col flex-1 min-h-0">
-            <TabsList className="self-start bg-[hsl(var(--muted))] h-8 mb-4">
-              <TabsTrigger value="visualization" className="text-[11px] h-6 px-2.5 data-[state=active]:text-[hsl(var(--primary))]">Visualization</TabsTrigger>
-              <TabsTrigger value="pipeline" className="text-[11px] h-6 px-2.5 data-[state=active]:text-[hsl(var(--primary))]">Pipeline</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="visualization" className="flex-1 min-h-0 mt-0 outline-none">
-              <VisualizationPanel sessionId={id} state={viz.state} onRetry={viz.retry} />
-            </TabsContent>
-
-            <TabsContent value="pipeline" className="flex-1 min-h-0 mt-0 outline-none">
-              <p className="text-[11px] font-medium text-[hsl(var(--ink-muted))] tracking-wide mb-4 uppercase">Pipeline · Last Turn</p>
-              <PipelinePanel
-                last={messages.filter((m) => m.role === "assistant" && !m.pending).slice(-1)[0]}
-                T={T}
-                onAdjust={async (delta) => {
-                  const last = messages.filter((m) => m.role === "assistant" && !m.pending).slice(-1)[0];
-                  if (!last?.sub_skill_id) return;
-                  await adjustMastery(last.sub_skill_id, delta);
-                  toast.success(delta > 0 ? T.increase : T.decrease);
-                }}
-              />
-
-              {audit && (
-                <div className="mt-8">
-                  <p className="text-[11px] font-medium text-[hsl(var(--ink-muted))] tracking-wide mb-3 uppercase">Audit Results</p>
-                  <h3 className="text-base font-semibold mb-3">{T.qualityResults}</h3>
-                  <dl className="space-y-2 text-[13px]">
-                    <Row k={T.etmTurns} v={String(audit.estimated_turns_to_mastery)} />
-                    <Row k={T.answerLeaked} v={audit.answer_leaked ? T.yes : T.no} bold={audit.answer_leaked} />
-                    <Row k={T.socraticAdherence} v={`${Math.round(audit.socratic_adherence * 100)}%`} />
-                  </dl>
-                  <div className="mt-3">
-                    <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))] mb-1">{T.improvements}</p>
-                    <p className="text-[13px] text-[hsl(var(--ink-muted))] whitespace-pre-wrap">
-                      {audit.recommended_improvements}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+        <aside className="lg:col-span-5 border-t border-[hsl(var(--hairline))] lg:border-t-0 lg:border-l lg:border-[hsl(var(--hairline))] pt-6 lg:pt-0 lg:pl-6 overflow-y-auto h-full pr-2 min-h-0 flex flex-col">
+          <VisualizationPanel sessionId={id} state={viz.state} onRetry={viz.retry} onVary={viz.vary} T={T} />
         </aside>
       </main>
     </div>
@@ -324,52 +276,6 @@ function Thinking() {
         <span className="thinking-dot h-2 w-2 rounded-full" />
         <span className="thinking-dot h-2 w-2 rounded-full" />
       </div>
-    </div>
-  );
-}
-
-function PipelinePanel({
-  last, T, onAdjust,
-}: {
-  last?: UIMessage;
-  T: ReturnType<typeof t>;
-  onAdjust?: (delta: number) => Promise<void> | void;
-}) {
-  if (!last) return <p className="text-[13px] text-[hsl(var(--ink-muted))]">No turns yet.</p>;
-  return (
-    <dl className="space-y-3 text-[13px]">
-      <Row k={T.targetSkill} v={last.sub_skill_name || "—"} />
-      <Row k="Difficulty" v={last.difficulty || "—"} />
-      <Row k={T.diagnosis} v={last.diagnosed_error || "—"} multiline />
-      <Row k={T.subgoal} v={last.subgoal || "—"} multiline />
-      {onAdjust && last.sub_skill_id && (
-        <div className="pt-2">
-          <dt className="text-[12px] font-medium text-[hsl(var(--ink-muted))] mb-1.5">{T.adjustMastery}</dt>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => onAdjust(-0.1)}
-              className="rounded-xl border border-[hsl(var(--primary)/0.2)] h-8 px-3 flex items-center gap-1.5 text-[11px] font-medium hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
-            >
-              <Minus className="h-3 w-3" /> 10%
-            </button>
-            <button
-              onClick={() => onAdjust(0.1)}
-              className="rounded-xl border border-[hsl(var(--primary)/0.2)] h-8 px-3 flex items-center gap-1.5 text-[11px] font-medium hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
-            >
-              <Plus className="h-3 w-3" /> 10%
-            </button>
-          </div>
-        </div>
-      )}
-    </dl>
-  );
-}
-
-function Row({ k, v, multiline, bold }: { k: string; v: string; multiline?: boolean; bold?: boolean }) {
-  return (
-    <div>
-      <dt className="text-[12px] font-medium text-[hsl(var(--ink-muted))]">{k}</dt>
-      <dd className={`mt-0.5 ${multiline ? "" : "truncate"} ${bold ? "font-semibold text-[hsl(var(--destructive))]" : ""}`}>{v}</dd>
     </div>
   );
 }

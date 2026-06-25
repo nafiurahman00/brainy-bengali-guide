@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const FN_URL = `${import.meta.env.VITE_API_URL}/api/tutor`;
+const FB_URL = `${import.meta.env.VITE_API_URL}/api/feedback`;
 
 export interface UIMessage {
   id: string;
@@ -10,10 +11,14 @@ export interface UIMessage {
   image_url?: string | null;
   sub_skill_id?: string | null;
   sub_skill_name?: string;
+  sub_skill_slug?: string;
   difficulty?: string;
   sanitized?: boolean;
   diagnosed_error?: string;
   subgoal?: string;
+  affective_state?: string;
+  support_level?: string;
+  mastery_after?: number;
   feedback?: "got_it" | "confused" | "more_help" | null;
   pending?: boolean;
 }
@@ -134,10 +139,14 @@ export function useChat(sessionId: string | undefined) {
                           ...m,
                           sub_skill_id: meta.sub_skill_id,
                           sub_skill_name: meta.sub_skill_name,
+                          sub_skill_slug: meta.sub_skill_slug,
                           difficulty: meta.difficulty,
                           sanitized: meta.sanitized,
                           diagnosed_error: meta.diagnosed_error,
                           subgoal: meta.subgoal,
+                          affective_state: meta.affective_state,
+                          support_level: meta.support_level,
+                          mastery_after: meta.mastery_after,
                         }
                       : m
                   )
@@ -175,58 +184,24 @@ export function useChat(sessionId: string | undefined) {
     async (msg: UIMessage, fb: "got_it" | "confused" | "more_help") => {
       // optimistic UI
       setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, feedback: fb } : m)));
-      if (msg.id.startsWith("temp-")) return;
-      await supabase.from("messages").update({ feedback: fb }).eq("id", msg.id);
+      if (msg.id.startsWith("temp-") || !sessionId) return;
 
-      // update knowledge_state via BKT
-      if (!msg.sub_skill_id) return;
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-
-      const { data: existing } = await supabase
-        .from("knowledge_state")
-        .select("*")
-        .eq("user_id", u.user.id)
-        .eq("sub_skill_id", msg.sub_skill_id)
-        .maybeSingle();
-
-      const cur = existing
-        ? {
-            mastery: Number(existing.mastery),
-            attempts: existing.attempts,
-            correct: existing.correct,
-            error_tags: existing.error_tags ?? [],
-          }
-        : { mastery: 0.3, attempts: 0, correct: 0, error_tags: [] as string[] };
-
-      const isCorrect = fb === "got_it";
-      const pLearn = 0.1, pGuess = 0.2, pSlip = 0.1;
-      let pM = cur.mastery;
-      if (isCorrect) {
-        const post = (pM * (1 - pSlip)) / (pM * (1 - pSlip) + (1 - pM) * pGuess);
-        pM = post + (1 - post) * pLearn;
-      } else {
-        const post = (pM * pSlip) / (pM * pSlip + (1 - pM) * (1 - pGuess));
-        pM = post + (1 - post) * pLearn;
+      // The primary mastery signal is now the server-side per-turn assessment.
+      // This button is a secondary, downweighted signal — record it on the
+      // backend (single source of truth in lib/mastery.ts).
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        await fetch(FB_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ sessionId, messageId: msg.id, feedback: fb }),
+        });
+      } catch {
+        /* non-fatal — the feedback is a secondary signal */
       }
-
-      const newTags = new Set(cur.error_tags);
-      if (fb === "confused" && msg.diagnosed_error) {
-        newTags.add(msg.diagnosed_error.slice(0, 40));
-      }
-
-      const payload = {
-        user_id: u.user.id,
-        sub_skill_id: msg.sub_skill_id,
-        mastery: Math.min(Math.max(pM, 0), 1),
-        attempts: cur.attempts + 1,
-        correct: cur.correct + (isCorrect ? 1 : 0),
-        error_tags: Array.from(newTags),
-        last_practiced_at: new Date().toISOString(),
-      };
-      await supabase.from("knowledge_state").upsert(payload, { onConflict: "user_id,sub_skill_id" });
     },
-    []
+    [sessionId]
   );
 
   const adjustMastery = useCallback(

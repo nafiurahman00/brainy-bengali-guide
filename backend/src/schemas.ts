@@ -21,6 +21,13 @@ export const tutorBodySchema = z.object({
 });
 export type TutorBody = z.infer<typeof tutorBodySchema>;
 
+export const feedbackBodySchema = z.object({
+  sessionId: z.string().uuid(),
+  messageId: z.string().uuid(),
+  feedback: z.enum(["got_it", "confused", "more_help"]),
+});
+export type FeedbackBody = z.infer<typeof feedbackBodySchema>;
+
 export const simulatorBodySchema = z.object({
   sessionId: z.string().uuid(),
   maxTurns: z.number().int().min(1).max(20).optional(),
@@ -33,6 +40,17 @@ export const visualizeBodySchema = z.object({
   imageUrl: z.string().optional(),
   language: z.enum(["en", "bn"]).optional(),
   regenerate: z.boolean().optional(),
+  // Planner context (from the latest SSE meta) so the sketch targets exactly
+  // what the student is working on. All optional for backward compatibility.
+  concept: z.string().optional(),
+  subSkillSlug: z.string().optional(),
+  subSkillName: z.string().optional(),
+  diagnosedError: z.string().optional(),
+  difficulty: z.string().optional(),
+  subgoal: z.string().optional(),
+  cleanedProblem: z.string().optional(),
+  // Lens for the "another angle / simpler" controls.
+  lens: z.enum(["another", "simpler"]).optional(),
 });
 export type VisualizeBody = z.infer<typeof visualizeBodySchema>;
 

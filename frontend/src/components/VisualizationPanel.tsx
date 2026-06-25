@@ -60,10 +60,10 @@ export function buildSrcDoc(p5Code: string, nonce = ""): string {
   }
   canvas {
     display: block;
+    width: 100% !important;
+    height: auto !important;
     max-width: 100% !important;
     max-height: 100% !important;
-    height: auto !important;
-    width: auto !important;
     border-radius: 6px;
   }
   /* p5 inserts its own DOM elements (sliders, buttons) below the canvas — keep them on one row */
@@ -197,6 +197,8 @@ export function VisualizationPanel(props: {
   sessionId?: string;
   state: VizState;
   onRetry?: () => void;
+  onVary?: (lens: "another" | "simpler") => void;
+  T?: { anotherAngle: string; simpler: string };
 }) {
   return (
     <VizErrorBoundary>
@@ -227,10 +229,14 @@ function VisualizationPanelInner({
   sessionId,
   state,
   onRetry,
+  onVary,
+  T,
 }: {
   sessionId?: string;
   state: VizState;
   onRetry?: () => void;
+  onVary?: (lens: "another" | "simpler") => void;
+  T?: { anotherAngle: string; simpler: string };
 }) {
   const [showCode, setShowCode] = useState(false);
   const [attemptKey, setAttemptKey] = useState(0);
@@ -271,7 +277,7 @@ function VisualizationPanelInner({
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-10 rounded-xl border border-[hsl(var(--primary)/0.15)] bg-[hsl(var(--primary)/0.03)] shadow-surface">
           <Loader2 className="h-5 w-5 animate-spin text-[hsl(var(--primary))] mb-3" />
           <p className="text-[13px] font-medium text-[hsl(var(--ink))]">Building a visual…</p>
-          <p className="text-[11px] text-[hsl(var(--ink-faint))] mt-1">Runs once per session · ~5–15s</p>
+          <p className="text-[11px] text-[hsl(var(--ink-faint))] mt-1">Tailored to your current step · ~5–15s</p>
         </div>
       </div>
     );
@@ -364,6 +370,23 @@ function VisualizationPanelInner({
           <p className="text-[11.5px] text-[hsl(var(--ink-muted))] leading-relaxed">
             {viz.interaction_hint}
           </p>
+        </div>
+      )}
+
+      {onVary && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => onVary("another")}
+            className="inline-flex items-center gap-1.5 text-[11px] font-medium border border-[hsl(var(--primary)/0.2)] rounded-xl h-8 px-3 bg-[hsl(var(--paper))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+          >
+            <RefreshCw className="h-3 w-3" /> {T?.anotherAngle ?? "Another angle"}
+          </button>
+          <button
+            onClick={() => onVary("simpler")}
+            className="inline-flex items-center gap-1.5 text-[11px] font-medium border border-[hsl(var(--primary)/0.2)] rounded-xl h-8 px-3 bg-[hsl(var(--paper))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+          >
+            <Sparkles className="h-3 w-3" /> {T?.simpler ?? "Simpler"}
+          </button>
         </div>
       )}
 

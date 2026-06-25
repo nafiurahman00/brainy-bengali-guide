@@ -2,16 +2,22 @@
 
 Self-hosted Node.js backend that replaces the previous Lovable Cloud edge
 functions. Verifies Supabase JWTs, calls the Lovable AI Gateway (Gemini
-2.5 Pro for planning, 2.5 Flash for streaming), and persists messages /
-scratchpad / knowledge state in Supabase.
+for planning + streaming), and persists messages / scratchpad / knowledge
+state in Supabase. Mastery is assessed **every turn** from the planner's own
+correctness verdict (single source of truth: `lib/mastery.ts`), and the tutor
+relaxes from Socratic questions up to a full solution via an Adaptive Help
+Ladder. Works identically in Bangla and English.
 
 ## Endpoints
 
-| Method | Path             | Auth                | Returns                               |
-|--------|------------------|---------------------|---------------------------------------|
-| GET    | `/health`        | —                   | `{ ok: true }`                         |
-| POST   | `/api/tutor`     | Optional Bearer JWT | `text/event-stream` (SSE)              |
-| POST   | `/api/simulator` | Bearer JWT required | JSON `{ result: { ... } }`             |
+| Method | Path                   | Auth                | Returns                               |
+|--------|------------------------|---------------------|---------------------------------------|
+| GET    | `/health`              | —                   | `{ ok: true }`                         |
+| POST   | `/api/tutor`           | Optional Bearer JWT | `text/event-stream` (SSE)              |
+| POST   | `/api/feedback`        | Bearer JWT required | JSON `{ ok, knowledge_update }` — records the "Got it / Confused" tap as a secondary, downweighted signal |
+| POST   | `/api/visualize`       | Bearer JWT required | JSON `{ ok, viz }` — context-aware p5.js sketch, cached per focus in `sessions.visualization` |
+| POST   | `/api/visualize/repair`| Bearer JWT required | JSON `{ ok, p5_code }`                  |
+| POST   | `/api/simulator`       | Bearer JWT required | JSON `{ result: { ... } }`             |
 
 `POST /api/tutor` works in two modes:
 
@@ -25,13 +31,24 @@ scratchpad / knowledge state in Supabase.
 The SSE stream is:
 
 ```
-data: { "meta": { "sub_skill_id": "...", "subgoal": "...", ... } }
+data: { "meta": {
+  "sub_skill_id": "...", "sub_skill_slug": "...", "difficulty": "...",
+  "diagnosed_error": "...", "subgoal": "...", "student_step_correct": true,
+  "affective_state": "neutral", "support_level": "socratic",
+  "response_type": "attempt", "mastery_after": 0.42,
+  "knowledge_update": { "sub_skill_slug": "...", "mastery": 0.42, "attempts": 3, ... }
+} }
 
 data: { "choices": [ { "delta": { "content": "..." } } ] }
 data: { "choices": [ { "delta": { "content": "..." } } ] }
 ...
 data: [DONE]
 ```
+
+`support_level` is the Help Ladder rung the tutor used this turn (`socratic` →
+`hint` → `scaffold` → `direct` → `full_solution`). `knowledge_update` is the new
+per-skill state after the server's per-turn assessment — guests apply it
+client-side (they persist nothing).
 
 ## Local development
 
@@ -110,9 +127,23 @@ docker run -p 8787:8787 --env-file .env socratic-tutor-backend
   and `anonClient()` (used to verify JWTs via
   `supabase.auth.getUser(jwt)`).
 - **`middleware/auth.ts`** provides `requireUser` and `optionalUser`.
-- **`routes/tutor.ts`** is a 1:1 port of the previous `tutor-agent`
-  Deno function. Streams Gemini chunks unchanged; prefixes a single
-  `meta` event so the client can render the planner's output.
+- **`routes/tutor.ts`** runs the two-stage pipeline: a planner (structured
+  tool call) that verifies correctness, reads affect, and rates evidence; then
+  a streamed Socratic generator. Between the two it runs the **per-turn
+  assessment** (updates `knowledge_state` + logs a `knowledge_events` row) and
+  decides the **Help Ladder** support level. Streams Gemini chunks unchanged;
+  prefixes a single `meta` event.
+- **`lib/mastery.ts`** is the single source of truth for the learning model:
+  evidence-weighted BKT (`applyEvidence`), forgetting (`applyDecay`), the
+  support-level ladder (`decideSupportLevel`), and the learner profile. It is
+  pure and unit-tested (`npm test`); both `/api/tutor` and `/api/feedback` go
+  through it so the math is never duplicated.
+- **`routes/feedback.ts`** records the manual "Got it / Confused" tap as a
+  secondary, downweighted evidence event and nudges the affective profile.
+- **`routes/visualize.ts`** builds p5.js sketches tied to the planner's current
+  concept / diagnosed gap / actual numbers, cached per focus inside the
+  `sessions.visualization` JSONB so they evolve as the conversation moves. All
+  on-canvas labels are localized.
 - **`routes/simulator.ts`** is a 1:1 port of `student-simulator`.
 - **CORS** is driven by `ALLOWED_ORIGINS` (comma-separated). Empty value
   means "any origin allowed" — only use that for local debugging.

@@ -1,9 +1,17 @@
 # Socratic AI Tutor
 
-A bilingual (English / Bangla) Socratic tutor for math and science. The
-tutor never reveals answers — it asks one focused, mastery-calibrated
-question per turn, defends against prompt injection, and tracks per-skill
-mastery using Bayesian Knowledge Tracing.
+A bilingual (English / Bangla) tutor for math and science. It is Socratic by
+default — one focused, mastery-calibrated question per turn — but it adapts how
+much it helps to how the student is doing: an **Adaptive Help Ladder** relaxes
+from a gentle hint up to a full worked solution when a student is stuck,
+frustrated, or explicitly asks. It reads the student's affect to stay warm and
+encouraging, defends against prompt injection, and tracks per-skill mastery with
+Bayesian Knowledge Tracing that updates on **every turn** (from the AI's own
+correctness verdict — not just manual feedback), with forgetting/decay and
+confidence. Everything works identically in Bangla and English.
+
+> 📖 **New here?** [FEATURES.md](FEATURES.md) is a detailed walkthrough of every
+> feature and how the AI pipeline, learning model, and visualizations work.
 
 > **v2 architecture** — decoupled into a static **frontend** (Vercel) and
 > a self-hosted **Node.js backend** (Render), backed by **your own**
@@ -29,8 +37,10 @@ mastery using Bayesian Knowledge Tracing.
 │  frontend/  (Vercel)        │    │  backend/  (Render)          │
 │  React + Vite + Tailwind    │    │  Express + TypeScript        │
 │  supabase-js                │    │  POST /api/tutor    (SSE)    │
-│                             │───▶│  POST /api/simulator         │
-│  Authorization: Bearer JWT  │    │  GET  /health                │
+│                             │───▶│  POST /api/feedback          │
+│                             │    │  POST /api/visualize         │
+│  Authorization: Bearer JWT  │    │  POST /api/simulator         │
+│                             │    │  GET  /health                │
 └─────────────────────────────┘    │  Verifies Supabase JWT       │
                                    │  Calls Lovable AI Gateway    │
                                    │   (Gemini 2.5 Pro / Flash)   │
@@ -81,11 +91,11 @@ kept as historical reference. The new source of truth is
 
 ```bash
 # 1. Database — create a Supabase project (https://supabase.com/dashboard),
-#    then in its SQL editor run:
-#      supabase-export/schema.sql
-#      supabase-export/seed.sql
-#      supabase-export/storage.sql
-#    (See supabase-export/README.md for screenshots-style instructions.)
+#    then in its SQL editor run the base schema (supabase-export/dump.sql),
+#    followed by the learning-model migration:
+#      supabase-export/02_learning_model.sql
+#    (adds per-turn assessment columns, the knowledge_events log, the
+#     concept_mastery view, and the learner profile.)
 
 # 2. Backend
 cd backend
@@ -204,11 +214,13 @@ browser                 supabase.co                 backend
 | Path                       | Purpose                                                  |
 |----------------------------|----------------------------------------------------------|
 | `frontend/src/pages/`      | Auth, Dashboard, SessionPage, GuestSession, Knowledge    |
-| `frontend/src/hooks/use-chat.ts` | Calls `${VITE_API_URL}/api/tutor` (SSE)            |
+| `frontend/src/hooks/use-chat.ts` | Calls `${VITE_API_URL}/api/tutor` (SSE); feedback → `/api/feedback` |
 | `frontend/src/integrations/supabase/` | Auto-generated client + types               |
-| `backend/src/routes/tutor.ts`     | Sanitize+Plan (Pro) → SSE stream (Flash)          |
+| `backend/src/routes/tutor.ts`     | Plan + per-turn assessment + Help Ladder → SSE stream |
+| `backend/src/routes/feedback.ts`  | Records the "Got it / Confused" tap (secondary signal) |
+| `backend/src/routes/visualize.ts` | Context-aware p5.js sketches (+ repair)            |
+| `backend/src/lib/mastery.ts`      | Single source of truth: BKT, decay, support ladder |
 | `backend/src/routes/simulator.ts` | EtM scoring (port of student-simulator)            |
 | `backend/src/middleware/auth.ts`  | `requireUser` / `optionalUser` JWT verify          |
-| `supabase-export/schema.sql`      | Tables, RLS, triggers, `handle_new_user`           |
-| `supabase-export/seed.sql`        | Subjects → concepts → sub_skills (EN + BN)          |
-| `supabase-export/storage.sql`     | `problem-images` bucket + per-user RLS              |
+| `supabase-export/dump.sql`        | Base tables, RLS, triggers, `handle_new_user`      |
+| `supabase-export/02_learning_model.sql` | `knowledge_events`, `concept_mastery` view, `sub_skill_prerequisites`, learner_state |

@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [picking, setPicking] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [rec, setRec] = useState<{ name: string; name_bn: string | null; avg: number } | null>(null);
 
   useEffect(() => {
     supabase.from("subjects").select("*").order("sort_order").then(({ data }) => setSubjects(data || []));
@@ -32,6 +33,17 @@ export default function Dashboard() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .then(({ data }) => setSessions((data as any) || []));
+      // Weakest tracked concept → "recommended next" (view not in generated types).
+      (supabase as any)
+        .from("concept_mastery")
+        .select("concept_name, concept_name_bn, avg_mastery, skills_tracked")
+        .eq("user_id", user.id)
+        .order("avg_mastery", { ascending: true })
+        .limit(1)
+        .then(({ data }: { data: any[] | null }) => {
+          const r = data?.[0];
+          if (r) setRec({ name: r.concept_name, name_bn: r.concept_name_bn, avg: Number(r.avg_mastery) });
+        });
     }
   }, [user]);
 
@@ -77,6 +89,21 @@ export default function Dashboard() {
               <Plus className="h-4 w-4 mr-2" /> {T.newSession}
             </InkButton>
           </div>
+
+          {rec && sessions.length > 0 && (
+            <div className="glass-card px-5 py-3 mb-6 flex items-center gap-2 flex-wrap text-[13px]">
+              <span className="font-medium">{T.welcomeBack} 👋</span>
+              <span className="text-[hsl(var(--ink-muted))]">
+                {T.recommendedNext}:
+              </span>
+              <span
+                className="font-semibold"
+                style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}
+              >
+                {lang === "bn" && rec.name_bn ? rec.name_bn : rec.name} · {Math.round(rec.avg * 100)}%
+              </span>
+            </div>
+          )}
 
           {picking && (
             <div className="glass-card p-6 mb-8 animate-pop-in">
