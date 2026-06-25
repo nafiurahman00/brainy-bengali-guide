@@ -22,12 +22,18 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="relative w-8 h-8 rounded-xl inline-flex items-center justify-center text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.08)] transition-all duration-200"
+      className="relative w-8 h-8 rounded-xl inline-flex items-center justify-center text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-all duration-300"
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       title={isDark ? "Light mode" : "Dark mode"}
     >
-      <span className="transition-transform duration-300" style={{ transform: isDark ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-        {isDark ? <Sun size={16} strokeWidth={2} /> : <Moon size={16} strokeWidth={2} />}
+      <span
+        className="transition-all duration-500 ease-out"
+        style={{
+          transform: isDark ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(1)',
+          opacity: 1,
+        }}
+      >
+        {isDark ? <Sun size={15} strokeWidth={2.2} /> : <Moon size={15} strokeWidth={2.2} />}
       </span>
     </button>
   );

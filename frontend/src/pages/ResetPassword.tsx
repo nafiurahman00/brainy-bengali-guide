@@ -5,7 +5,7 @@ import { passwordSchema } from "@/lib/validation";
 import { toast } from "sonner";
 import { InkButton } from "@/components/InkButton";
 import { AppHeader } from "@/components/AppHeader";
-import { KeyRound } from "lucide-react";
+import { KeyRound, ArrowRight } from "lucide-react";
 
 export default function ResetPassword() {
   const nav = useNavigate();
@@ -41,29 +41,31 @@ export default function ResetPassword() {
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
         <div className="w-full max-w-md animate-slide-up">
           <div className="text-center mb-8">
-            <div className="hero-icon w-14 h-14 text-white mb-5">
-              <KeyRound className="h-6 w-6" />
+            <div className="hero-icon w-14 h-14 text-white mb-6 mx-auto">
+              <KeyRound className="h-6 w-6 relative z-10" />
             </div>
-            <p className="text-[12px] font-medium text-[hsl(var(--primary))] mb-2 uppercase">Recovery</p>
+            <p className="text-[11px] font-semibold gradient-text tracking-widest mb-2 uppercase">Recovery</p>
             <h1 className="text-2xl sm:text-3xl font-bold">Set a new password</h1>
           </div>
-          <form onSubmit={submit} className="glass-card p-6 space-y-4">
+          <form onSubmit={submit} className="glass-card-elevated p-6 space-y-4">
             <label className="block">
               <span className="block mb-1.5 text-[12px] font-medium text-[hsl(var(--ink-muted))]">New password</span>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full h-11 px-4 rounded-xl border border-[hsl(var(--hairline))] bg-[hsl(var(--muted))] text-[14px] outline-none focus:border-[hsl(var(--primary))] focus:shadow-glow transition-all"
+                className="input-premium"
                 autoComplete="new-password"
                 disabled={!ready}
+                placeholder="••••••••"
               />
             </label>
-            <InkButton variant="solid" disabled={busy || !ready} className="w-full h-11">
+            <InkButton variant="solid" disabled={busy || !ready} className="w-full h-11 text-[14px]">
               Update password
+              <ArrowRight className="h-4 w-4 ml-2" />
             </InkButton>
             {!ready && (
-              <p className="text-[13px] text-[hsl(var(--ink-muted))] text-center">
+              <p className="text-[13px] text-[hsl(var(--ink-muted))] text-center leading-relaxed">
                 Open the link from your email on this device.
               </p>
             )}

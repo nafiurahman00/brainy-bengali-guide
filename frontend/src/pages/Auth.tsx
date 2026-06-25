@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/i18n";
 import { AppHeader } from "@/components/AppHeader";
+import { GraduationCap, Sparkles, ArrowRight, BookOpen, Brain } from "lucide-react";
 
 type Mode = "signin" | "signup" | "forgot";
 
@@ -62,38 +63,68 @@ export default function Auth() {
     } finally { setBusy(false); }
   };
 
+  const features = [
+    { icon: <Sparkles className="h-4 w-4" />, text: "AI-powered Socratic method" },
+    { icon: <BookOpen className="h-4 w-4" />, text: "Bilingual Bengali + English" },
+    { icon: <Brain className="h-4 w-4" />, text: "Adaptive knowledge tracking" },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
-        <div className="w-full max-w-md animate-slide-up">
+        <div className="w-full max-w-[440px] animate-slide-up">
+          {/* Hero section */}
           <div className="mb-8 sm:mb-10 text-center">
-            <div className="hero-icon w-14 h-14 text-white text-2xl font-bold mb-5">
-              S
+            <div className="hero-icon w-14 h-14 text-white text-2xl font-bold mb-6 mx-auto">
+              <GraduationCap className="h-6 w-6 relative z-10" />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{T.appName}</h1>
-            <p className="mt-2.5 text-[15px] text-[hsl(var(--ink-muted))]">{T.tagline}</p>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2">{T.appName}</h1>
+            <p className="text-[15px] text-[hsl(var(--ink-muted))] leading-relaxed">{T.tagline}</p>
           </div>
 
-          <div className="glass-card overflow-hidden">
-            <div className="grid grid-cols-2 border-b border-[hsl(var(--hairline))]">
+          {/* Feature pills */}
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
+            {features.map((f, i) => (
+              <div key={i} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[hsl(var(--ink-muted))] bg-[hsl(var(--muted))] rounded-full px-3 py-1.5 border border-[hsl(var(--hairline))]">
+                <span className="text-[hsl(var(--primary))]">{f.icon}</span>
+                {f.text}
+              </div>
+            ))}
+          </div>
+
+          {/* Auth card */}
+          <div className="glass-card-elevated overflow-hidden">
+            {/* Tab selector */}
+            <div className="grid grid-cols-2 relative">
               <button
                 onClick={() => setMode("signin")}
-                className={`h-12 text-[13px] font-medium tracking-wide transition-all ${
+                className={`h-12 text-[13px] font-medium tracking-wide transition-all relative z-10 ${
                   mode === "signin"
-                    ? "btn-gradient text-white"
-                    : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.06)]"
+                    ? "text-[hsl(var(--foreground))]"
+                    : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--foreground))]"
                 }`}
               >{T.signIn}</button>
               <button
                 onClick={() => setMode("signup")}
-                className={`h-12 text-[13px] font-medium tracking-wide transition-all ${
+                className={`h-12 text-[13px] font-medium tracking-wide transition-all relative z-10 ${
                   mode === "signup"
-                    ? "btn-gradient text-white"
-                    : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.06)]"
+                    ? "text-[hsl(var(--foreground))]"
+                    : "text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--foreground))]"
                 }`}
               >{T.signUp}</button>
+              {/* Sliding indicator */}
+              <div
+                className="absolute bottom-0 h-[2px] rounded-full transition-all duration-300 ease-out"
+                style={{
+                  width: '50%',
+                  left: mode === "signup" ? '50%' : '0%',
+                  background: 'var(--gradient-primary)',
+                  boxShadow: '0 0 8px hsl(var(--primary) / 0.3)',
+                }}
+              />
             </div>
+            <div className="h-px bg-[hsl(var(--hairline))]" />
 
             <form onSubmit={submit} className="p-6 space-y-4">
               {mode === "signup" && (
@@ -101,8 +132,9 @@ export default function Auth() {
                   <input
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="auth-input"
+                    className="input-premium"
                     autoComplete="name"
+                    placeholder="Your name"
                   />
                 </Field>
               )}
@@ -111,9 +143,10 @@ export default function Auth() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="auth-input"
+                  className="input-premium"
                   autoComplete="email"
                   required
+                  placeholder="you@example.com"
                 />
               </Field>
               {mode !== "forgot" && (
@@ -122,18 +155,20 @@ export default function Auth() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="auth-input"
+                    className="input-premium"
                     autoComplete={mode === "signup" ? "new-password" : "current-password"}
                     required
+                    placeholder="••••••••"
                   />
                 </Field>
               )}
 
               <div className="pt-2">
-                <InkButton variant="solid" disabled={busy} className="w-full h-11">
+                <InkButton variant="solid" disabled={busy} className="w-full h-11 text-[14px]">
                   {mode === "signin" && T.signIn}
                   {mode === "signup" && T.signUp}
                   {mode === "forgot" && T.sendReset}
+                  <ArrowRight className="h-4 w-4 ml-2" />
                 </InkButton>
               </div>
 
@@ -154,22 +189,23 @@ export default function Auth() {
             </form>
           </div>
 
+          {/* Guest link */}
           <div className="mt-6 text-center">
             <div className="relative py-4">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[hsl(var(--hairline))]" /></div>
+              <div className="absolute inset-0 flex items-center"><div className="w-full" style={{ height: '1px', background: 'linear-gradient(90deg, transparent, hsl(var(--hairline)), transparent)' }} /></div>
               <div className="relative flex justify-center"><span className="bg-[hsl(var(--background))] px-3 text-[12px] text-[hsl(var(--ink-faint))] font-medium">or</span></div>
             </div>
             <button
               type="button"
               onClick={() => nav("/guest")}
-              className="text-[13px] font-medium text-[hsl(var(--primary))] hover:underline transition-colors"
+              className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[hsl(var(--primary))] hover:underline transition-colors group"
             >
-              {T.continueGuest} →
+              {T.continueGuest}
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </button>
           </div>
         </div>
       </main>
-      <style>{`.auth-input{display:block;width:100%;height:44px;padding:0 14px;border:1px solid hsl(var(--hairline));border-radius:12px;background:hsl(var(--muted));font-family:'Inter',system-ui,sans-serif;font-size:14px;color:hsl(var(--ink));outline:none;transition:border-color 0.2s,box-shadow 0.2s}.auth-input:focus{border-color:hsl(var(--primary));box-shadow:var(--shadow-glow)}`}</style>
     </div>
   );
 }

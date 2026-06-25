@@ -8,7 +8,7 @@ import { t } from "@/lib/i18n";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import { ImageIcon, X, Plus, Minus, RotateCcw, Send, Sparkles, LogIn } from "lucide-react";
+import { ImageIcon, X, Plus, Minus, RotateCcw, Send, Sparkles, LogIn, GraduationCap, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
 
 const FN_URL = `${import.meta.env.VITE_API_URL}/api/tutor`;
@@ -50,6 +50,7 @@ export default function GuestSession() {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"chat" | "sidebar">("chat");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -269,57 +270,73 @@ export default function GuestSession() {
     <div className="h-[100dvh] w-full overflow-hidden flex flex-col">
       <AppHeader />
 
-      <div className="shrink-0 border-b border-[hsl(var(--hairline))]" style={{ background: 'linear-gradient(135deg, hsl(252 85% 60% / 0.06), hsl(320 70% 58% / 0.06))' }}>
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 text-[12px]">
-          <span className="font-medium text-[hsl(var(--ink-muted))]">
-            ✦ {T.guestNotice}
+      {/* Guest notice */}
+      <div className="shrink-0 section-divider" style={{ background: 'var(--gradient-subtle)' }}>
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 text-[12px]">
+          <span className="font-medium text-[hsl(var(--ink-muted))] flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-[hsl(var(--primary))]" />
+            {T.guestNotice}
           </span>
-          <Link to="/auth" className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[hsl(var(--primary))] hover:underline">
-            <LogIn className="h-3.5 w-3.5" /> {T.saveProgress} →
+          <Link to="/auth" className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[hsl(var(--primary))] hover:underline group">
+            <LogIn className="h-3.5 w-3.5" /> {T.saveProgress}
+            <ArrowUp className="h-3 w-3 rotate-45 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
         </div>
       </div>
 
-      <div className="shrink-0 border-b border-[hsl(var(--hairline))] bg-[hsl(var(--paper))]">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex items-center gap-3 flex-wrap">
-          <p className="text-[12px] font-medium text-[hsl(var(--ink-muted))]">{T.pickSubject}:</p>
-          {subjects.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setSubject(s)}
-              className={`text-[12px] font-medium px-3 h-8 rounded-xl border transition-all ${
-                subject?.id === s.id
-                  ? "btn-gradient text-white border-transparent shadow-sm"
-                  : "border-[hsl(var(--primary)/0.2)] text-[hsl(var(--ink-muted))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
-              }`}
-            >
-              {subjectName(s)}
-            </button>
-          ))}
+      {/* Subject picker */}
+      <div className="shrink-0 border-b border-[hsl(var(--hairline))]" style={{ background: 'hsl(var(--paper))' }}>
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3 flex-wrap">
+          <p className="text-[12px] font-semibold text-[hsl(var(--ink-muted))] uppercase tracking-wide">{T.pickSubject}:</p>
+          <div className="flex gap-2 flex-wrap">
+            {subjects.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => setSubject(s)}
+                className={`text-[12px] font-medium px-3.5 h-8 rounded-xl border transition-all duration-200 ${
+                  subject?.id === s.id
+                    ? "btn-gradient text-white border-transparent shadow-sm"
+                    : "border-[hsl(var(--hairline))] text-[hsl(var(--ink-muted))] hover:border-[hsl(var(--primary)/0.3)] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.04)]"
+                }`}
+              >
+                {subjectName(s)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <main className="flex-1 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
-        <section className="lg:col-span-8 flex flex-col min-h-0 h-full">
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col lg:grid lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
+        {/* Mobile Tabs */}
+        <div className="lg:hidden flex rounded-xl bg-[hsl(var(--muted))] p-1 shrink-0">
+          <button onClick={() => setMobileTab("chat")} className={`flex-1 py-1.5 text-[13px] font-medium rounded-lg transition-all ${mobileTab === 'chat' ? 'bg-[hsl(var(--card))] shadow-sm text-[hsl(var(--foreground))]' : 'text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--foreground))]'}`}>Chat</button>
+          <button onClick={() => setMobileTab("sidebar")} className={`flex-1 py-1.5 text-[13px] font-medium rounded-lg transition-all ${mobileTab === 'sidebar' ? 'bg-[hsl(var(--card))] shadow-sm text-[hsl(var(--foreground))]' : 'text-[hsl(var(--ink-muted))] hover:text-[hsl(var(--foreground))]'}`}>Session Info</button>
+        </div>
+
+        {/* Chat panel */}
+        <section className={`lg:col-span-8 min-h-0 h-full flex-col ${mobileTab === 'chat' ? 'flex' : 'hidden lg:flex'}`}>
           <div ref={scrollRef} className="flex-1 overflow-y-auto pr-2 space-y-6">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full min-h-[40vh] text-center px-8">
-                <div className="hero-icon w-16 h-16 mb-5">
-                  <Sparkles className="h-7 w-7 text-white" />
+                <div className="hero-icon w-16 h-16 mb-6">
+                  <GraduationCap className="h-7 w-7 text-white relative z-10" />
                 </div>
-                <p className="text-[12px] font-medium text-[hsl(var(--primary))] mb-2">Guest mode</p>
-                <p className="text-[15px] text-[hsl(var(--ink-muted))] max-w-sm leading-relaxed">
-                  Type a problem below — or attach a screenshot.<br />
+                <p className="text-[11px] font-semibold gradient-text tracking-widest mb-3 uppercase">Guest mode</p>
+                <p className="text-[16px] font-medium text-[hsl(var(--foreground))] mb-2">
+                  What would you like to learn?
+                </p>
+                <p className="text-[14px] text-[hsl(var(--ink-muted))] max-w-sm leading-relaxed">
+                  Type a problem below — or attach a screenshot.
+                  <br />
                   <span className="text-[hsl(var(--ink-faint))] text-[13px]">Your tutor guides you with questions — and steps in with more help whenever you're stuck.</span>
                 </p>
               </div>
             )}
-            {messages.map((m, i) => (
+            {messages.map((m) => (
               <Bubble
                 key={m.id}
                 msg={m}
                 lang={lang}
-                index={i}
                 isLastAssistant={m.id === lastAssistantId}
                 onFeedback={(fb) => giveFeedback(m, fb)}
               />
@@ -329,17 +346,18 @@ export default function GuestSession() {
             )}
           </div>
 
+          {/* Input area */}
           <div className="border-t border-[hsl(var(--hairline))] pt-4 mt-4">
             {imagePreview && (
               <div className="mb-3 inline-flex items-center gap-2 rounded-xl border border-[hsl(var(--hairline))] p-2 bg-[hsl(var(--muted))]">
                 <img src={imagePreview} alt="preview" className="h-14 w-14 object-cover rounded-lg" />
-                <button onClick={() => { setImage(null); setImagePreview(null); }} className="p-1 rounded-md hover:bg-[hsl(var(--paper))] transition-colors">
+                <button onClick={() => { setImage(null); setImagePreview(null); }} className="p-1.5 rounded-lg hover:bg-[hsl(var(--paper))] transition-colors">
                   <X className="h-4 w-4" />
                 </button>
               </div>
             )}
-            <div className="rounded-xl border border-[hsl(var(--hairline))] bg-[hsl(var(--paper))] flex items-end gap-2 p-3 shadow-surface focus-primary transition-all">
-              <label className="cursor-pointer p-2 rounded-lg hover:bg-[hsl(var(--primary)/0.08)] shrink-0 transition-colors" title="Attach image">
+            <div className="rounded-2xl border border-[hsl(var(--hairline))] bg-[hsl(var(--card))] flex items-end gap-2 p-3 shadow-surface focus-primary transition-all">
+              <label className="cursor-pointer p-2 rounded-xl hover:bg-[hsl(var(--primary)/0.06)] shrink-0 transition-all" title="Attach image">
                 <ImageIcon className="h-4 w-4 text-[hsl(var(--ink-muted))]" />
                 <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && handleImage(e.target.files[0])} />
               </label>
@@ -366,9 +384,11 @@ export default function GuestSession() {
           </div>
         </section>
 
-        <aside className="lg:col-span-4 border-t border-[hsl(var(--hairline))] lg:border-t-0 lg:border-l lg:border-[hsl(var(--hairline))] pt-6 lg:pt-0 lg:pl-6 space-y-8 overflow-y-auto h-full pr-2">
+        {/* Sidebar */}
+        <aside className={`lg:col-span-4 border-t border-[hsl(var(--hairline))] lg:border-t-0 lg:border-l lg:border-[hsl(var(--hairline))] pt-6 lg:pt-0 lg:pl-6 space-y-8 overflow-y-auto h-full pr-2 flex-col ${mobileTab === 'sidebar' ? 'flex' : 'hidden lg:flex'}`}>
+          {/* Pipeline info */}
           <div>
-            <p className="text-[11px] font-medium text-[hsl(var(--ink-muted))] tracking-wide mb-3 uppercase">Pipeline · Last Turn</p>
+            <p className="text-[11px] font-semibold text-[hsl(var(--ink-muted))] tracking-widest mb-4 uppercase">Pipeline · Last Turn</p>
             {lastAssistant ? (
               <dl className="space-y-3 text-[13px]">
                 <Row k={T.targetSkill} v={lastAssistant.sub_skill_name || "—"} />
@@ -377,45 +397,46 @@ export default function GuestSession() {
                 <Row k={T.subgoal} v={lastAssistant.subgoal || "—"} multiline />
               </dl>
             ) : (
-              <p className="text-[13px] text-[hsl(var(--ink-muted))]">No turns yet.</p>
+              <p className="text-[13px] text-[hsl(var(--ink-faint))]">No turns yet.</p>
             )}
           </div>
 
+          {/* Mastery tracking */}
           <div>
-            <p className="text-[11px] font-medium text-[hsl(var(--ink-muted))] tracking-wide mb-3 uppercase">Session Mastery</p>
+            <p className="text-[11px] font-semibold text-[hsl(var(--ink-muted))] tracking-widest mb-4 uppercase">Session Mastery</p>
             {Object.keys(fluency).length === 0 ? (
-              <p className="text-[13px] text-[hsl(var(--ink-muted))]">{T.noPractice}</p>
+              <p className="text-[13px] text-[hsl(var(--ink-faint))]">{T.noPractice}</p>
             ) : (
               <ul className="space-y-5">
                 {Object.entries(fluency).map(([slug, f]) => (
-                  <li key={slug}>
-                    <div className="flex items-baseline justify-between gap-3 mb-1.5">
+                  <li key={slug} className="glass-card p-4">
+                    <div className="flex items-baseline justify-between gap-3 mb-2">
                       <div className="text-[14px] font-medium truncate">{f.name || slug}</div>
-                      <div className="font-mono text-[12px] font-semibold" style={{ background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                      <div className="font-mono text-[12px] font-bold gradient-text">
                         {Math.round(f.mastery * 100)}%
                       </div>
                     </div>
                     <div className="bar-track">
                       <div className="bar-fill" style={{ width: `${Math.round(f.mastery * 100)}%` }} />
                     </div>
-                    <div className="mt-2 flex items-center gap-1.5">
+                    <div className="mt-3 flex items-center gap-1.5">
                       <button
                         onClick={() => adjustMastery(slug, -0.1)}
-                        className="rounded-xl border border-[hsl(var(--primary)/0.2)] h-7 w-7 flex items-center justify-center hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+                        className="rounded-xl border border-[hsl(var(--hairline))] h-7 w-7 flex items-center justify-center hover:border-[hsl(var(--primary)/0.3)] hover:text-[hsl(var(--primary))] transition-all"
                         title={T.decrease}
                       >
                         <Minus className="h-3 w-3" />
                       </button>
                       <button
                         onClick={() => adjustMastery(slug, 0.1)}
-                        className="rounded-xl border border-[hsl(var(--primary)/0.2)] h-7 w-7 flex items-center justify-center hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+                        className="rounded-xl border border-[hsl(var(--hairline))] h-7 w-7 flex items-center justify-center hover:border-[hsl(var(--primary)/0.3)] hover:text-[hsl(var(--primary))] transition-all"
                         title={T.increase}
                       >
                         <Plus className="h-3 w-3" />
                       </button>
                       <button
                         onClick={() => resetMastery(slug)}
-                        className="rounded-xl border border-[hsl(var(--primary)/0.2)] h-7 px-2 flex items-center gap-1 text-[10px] font-medium hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+                        className="rounded-xl border border-[hsl(var(--hairline))] h-7 px-2 flex items-center gap-1 text-[10px] font-medium hover:border-[hsl(var(--primary)/0.3)] hover:text-[hsl(var(--primary))] transition-all"
                         title={T.reset}
                       >
                         <RotateCcw className="h-2.5 w-2.5" /> {T.reset}
@@ -436,9 +457,9 @@ export default function GuestSession() {
 }
 
 function Bubble({
-  msg, lang, index, isLastAssistant, onFeedback,
+  msg, lang, isLastAssistant, onFeedback,
 }: {
-  msg: UIMessage; lang: "en" | "bn"; index: number;
+  msg: UIMessage; lang: "en" | "bn";
   isLastAssistant: boolean;
   onFeedback: (fb: "got_it" | "confused") => void;
 }) {
@@ -450,14 +471,14 @@ function Bubble({
       <div className="flex flex-col items-end gap-1.5 animate-[inkFade_0.25s_ease-out]">
         <div className="flex items-center gap-2">
           {msg.sanitized && (
-            <span className="text-[10px] font-medium text-[hsl(var(--warning))] bg-[hsl(var(--warning))]/10 rounded-md px-2 py-0.5">
+            <span className="text-[10px] font-medium text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.1)] rounded-md px-2 py-0.5 border border-[hsl(var(--warning)/0.15)]">
               ⚠ {T.sanitized}
             </span>
           )}
           <span className="text-[11px] font-medium text-[hsl(var(--ink-muted))]">you</span>
         </div>
         {msg.image_url && (
-          <img src={msg.image_url} alt="problem" className="rounded-xl max-h-56 border border-[hsl(var(--hairline))]" />
+          <img src={msg.image_url} alt="problem" className="rounded-xl max-h-56 border border-[hsl(var(--hairline))] shadow-sm" />
         )}
         <div className={`prose-chat user-bubble px-4 py-3 rounded-2xl rounded-tr-md max-w-[78%] ${lang === "bn" ? "bn" : ""}`}>
           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
@@ -471,17 +492,17 @@ function Bubble({
   return (
     <div className="flex gap-3 animate-[inkFade_0.25s_ease-out]">
       <div className="ai-avatar mt-1">
-        <span className="text-white text-[11px] font-bold">AI</span>
+        <GraduationCap className="h-3.5 w-3.5 text-white relative z-10" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-[11px] font-medium text-[hsl(var(--ink-muted))]">tutor</span>
+          <span className="text-[11px] font-semibold text-[hsl(var(--ink-muted))]">tutor</span>
           {msg.difficulty && (
             <span className="tag-primary">{msg.difficulty}</span>
           )}
         </div>
         {msg.image_url && (
-          <img src={msg.image_url} alt="problem" className="rounded-xl max-h-56 mb-2 border border-[hsl(var(--hairline))]" />
+          <img src={msg.image_url} alt="problem" className="rounded-xl max-h-56 mb-2 border border-[hsl(var(--hairline))] shadow-sm" />
         )}
         <div className={`prose-chat tutor-bubble px-4 py-3 rounded-2xl rounded-tl-md ${lang === "bn" ? "bn" : ""}`}>
           {msg.content ? (
@@ -501,7 +522,7 @@ function Bubble({
                 <button
                   key={fb}
                   onClick={() => onFeedback(fb)}
-                  className="text-[11px] font-medium px-3 h-8 rounded-xl border border-[hsl(var(--primary)/0.2)] text-[hsl(var(--ink-muted))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-all"
+                  className="text-[11px] font-medium px-3 h-8 rounded-xl border border-[hsl(var(--hairline))] text-[hsl(var(--ink-muted))] hover:border-[hsl(var(--primary)/0.3)] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.04)] transition-all"
                 >
                   {icons[fb]} {labels[fb]}
                 </button>
@@ -518,7 +539,7 @@ function Thinking() {
   return (
     <div className="flex gap-3">
       <div className="ai-avatar">
-        <span className="text-white text-[11px] font-bold">AI</span>
+        <GraduationCap className="h-3.5 w-3.5 text-white relative z-10" />
       </div>
       <div className="flex gap-2 items-center py-3 px-4 tutor-bubble rounded-2xl rounded-tl-md">
         <span className="thinking-dot h-2 w-2 rounded-full" />
@@ -531,9 +552,9 @@ function Thinking() {
 
 function Row({ k, v, multiline }: { k: string; v: string; multiline?: boolean }) {
   return (
-    <div>
-      <dt className="text-[12px] font-medium text-[hsl(var(--ink-muted))]">{k}</dt>
-      <dd className={`mt-0.5 ${multiline ? "" : "truncate"}`}>{v}</dd>
+    <div className="glass-card p-3">
+      <dt className="text-[11px] font-semibold text-[hsl(var(--ink-muted))] uppercase tracking-wide mb-1">{k}</dt>
+      <dd className={`text-[13px] ${multiline ? "" : "truncate"}`}>{v}</dd>
     </div>
   );
 }
